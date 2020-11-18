@@ -8,7 +8,7 @@ class Sequencer:
         self.robot.state = "wander"
 
         #thread.start_new_thread( self.sequence ,() )
-
+        #yo yo yo yo
 
     def sequence(self):
         while not rospy.is_shutdown():
