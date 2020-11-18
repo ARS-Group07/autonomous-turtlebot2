@@ -1,5 +1,5 @@
 #
-import scripts.robot
+import robot
 import rospy
 import thread
 
@@ -11,25 +11,6 @@ class Sequencer:
 
     def sequence(self):
         while not rospy.is_shutdown():
-
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
-            # ALBET BRANCH
 
             rate = rospy.Rate(25)
             rospy.loginfo('state: ' + self.robot.state)
