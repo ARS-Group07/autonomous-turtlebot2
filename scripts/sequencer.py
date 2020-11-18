@@ -1,18 +1,35 @@
 #
-import robot
+import scripts.robot
 import rospy
 import thread
+
 
 class Sequencer:
     def __init__(self, robot):
         self.robot = robot
         self.robot.state = "wander"
 
-        #thread.start_new_thread( self.sequence ,() )
-        #yo yo yo yo
-
     def sequence(self):
         while not rospy.is_shutdown():
+
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
+            # ALBET BRANCH
 
             rate = rospy.Rate(25)
             rospy.loginfo('state: ' + self.robot.state)
@@ -33,4 +50,3 @@ class Sequencer:
                 self.robot.move_forward()
 
             rate.sleep()
-            
