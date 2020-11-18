@@ -1,0 +1,37 @@
+Assignment plan 
+
+ALBERT 
+> load premade map of the environment 
+
+> or use our own module to get initial pose estimate using Monte Carlo / use 2D pose estimate 
+
+CEM
+> use camera module to continually assess environment for each of the 4 objects 
+	> red, green, blue detection for hydrant, box and mailbox 
+	> text detection to find the 5-box 
+	> depth camera finds distance to object of interest, for use in grid
+
+ALBERT
+> use grid module to create a probability map for the location of each object 
+	> eg. if green box not in line of sight, all line of sight squares probability = 0
+	> use this to create frontiers where objects might be found
+	> combine all 4 object's frontiers to choose the best frontier
+	> set a waypoint to the best frontier 
+
+BEN
+> if an object of interest is detected by camera module, stop exploration behaviour, move towards object
+> once within 1 meter of object, that object is FOUND and no longer used in deciding exploration behaviour
+> use avoidance behaviour to prevent hitting walls etc 
+
+
+BEN 
+Behaviour management 
+
+> object-oriented state management 
+> state hierarchy (high to low level)
+  > frontier exploration 
+    > moving towards object
+      > avoidance
+
+
+

@@ -13,6 +13,7 @@ class Sequencer:
 
     def sequence(self):
         while not rospy.is_shutdown():
+
             rate = rospy.Rate(25)
             rospy.loginfo('state: ' + self.robot.state)
             if(self.robot.flag_obstacle_front is False and self.robot.flag_obstacle_right is False):
