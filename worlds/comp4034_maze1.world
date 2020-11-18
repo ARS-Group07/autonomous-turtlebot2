@@ -1,5 +1,4 @@
 <sdf version='1.6'>
-
   <world name='default'>
     <light name='sun' type='directional'>
       <cast_shadows>1</cast_shadows>
@@ -1997,5 +1996,4 @@
       </camera>
     </gui>
   </world>
-
 </sdf>
