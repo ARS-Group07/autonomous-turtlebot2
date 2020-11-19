@@ -23,24 +23,23 @@ def twist_msg(lin_vel=0., ang_vel=0.):
     msg.angular.x = 0.
     msg.angular.y = 0.
     msg.angular.z = ang_vel
-
     return msg
 
 class Robot:
-    def __init__(self, x=0., y=0., yaw=0.,sequencer = None,  pathPlanner = None, sub_odom = None, publisher = None):
+    def __init__(self, x=0., y=0., yaw=0., sequencer = None):
         self.pose = pose.Pose(x,y,yaw)
+        # Flags / states
         self.state = "wander"
         self.flag_obstacle_front = False
         self.flag_obstacle_right = False
         self.flag_imminentobstacle = False
         self.flag_object = False
-        self.flag_reached = False
-        self.pathPlanner = pathPlanner
         self.sequencer = sequencer
-        self.publisher = publisher
+
+        self.publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
         rospy.Subscriber('odom', Odometry, self.get_odom_data)
-        #rospy.Subscriber('camera/rgb/image_raw', Image, myRobot.idh.get_image_data)
+        rospy.Subscriber('camera/rgb/image_raw', Image, self.get_image_data)
 
         
     def turn_left(self):
@@ -51,14 +50,13 @@ class Robot:
         self.publisher.publish(twist_msg(0.2, 0.))
             
     def get_odom_data(self, msg):
-            """ Converts to euler angles, saves the received odom data as a dictionary and appends to global odom_msgs list. """
-            quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
-            (_, _, yaw) = euler_from_quaternion(quarternion)
-            x = msg.pose.pose.position.x
-            y = msg.pose.pose.position.y
+        """ Converts to euler angles, saves the received odom data as a dictionary and appends to global odom_msgs list. """
+        quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
+        (_, _, yaw) = euler_from_quaternion(quarternion)
+        x = msg.pose.pose.position.x
+        y = msg.pose.pose.position.y
 
-    
-            self.odomdata = {'x': x, 'y': y, 'yaw': yaw}
+        self.pose = pose.Pose(x, y, yaw)
 
 
     def get_laser_data(self, msg):
@@ -66,10 +64,10 @@ class Robot:
         laser_data = msg.ranges[:31] + msg.ranges[-30:]
         laser_data_right = msg.ranges[31:150]
         distright = min(laser_data_right)
-        rospy.loginfo('right_dist: ' + str(distright))
+        #rospy.loginfo('right_dist: ' + str(distright))
 
         dist = min(laser_data)
-        rospy.loginfo('dist: ' + str(dist))
+        #rospy.loginfo('dist: ' + str(dist))
 
         if distright <= 1.0:
             self.flag_obstacle_right = True
@@ -83,3 +81,8 @@ class Robot:
         else: 
             self.flag_obstacle_front = False
             self.flag_imminentobstacle = False
+
+
+    def get_image_data(self, msg):
+        # TOD0
+        test = 1
