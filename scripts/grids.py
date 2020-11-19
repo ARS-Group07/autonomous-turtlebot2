@@ -6,21 +6,35 @@ from matplotlib import pyplot as plt
 class Grid:
     """ Class representing a metric map, denoting obstacles and probabilities of objects of interest in the world. """
 
-    def __init__(self, size=20, resolution=0.25):
+    def __init__(self, size=19., resolution=0.125, map_arr=None):
         self.origin_x = -10.  # from map .yaml file
         self.origin_y = -10.
         self.size = size
         self.resolution = resolution
         self.eff_size = int(self.size / self.resolution)  # effective size used in most calculations
+        self.prev_index = None
 
         # Create a 1D array of 0.5's that will represent the probability grid
-        self.grid = np.ones([self.eff_size ** 2]) * 0.5
+        # Initialise grid from the map
+        self.grid = map_arr
+        # self.grid = np.ones([self.eff_size ** 2]) * -0.25
 
-    def update_grid(self, px, py):
+    def update_grid(self, px, py, flag):
         """ Based on camera data, update the probability of an object of interest being present at each co-ordinate. """
         gx, gy = self.to_grid(px, py)
-        # rospy.loginfo('GRID: gx gy co-ordinates: (' + str(gx) + ', ' + str(gy) + ') as 1')
-        self.grid[self.to_index(gx, gy)] = 1
+
+        if self.grid[self.to_index(gx, gy)] == -1.:
+            return
+
+        if flag == 'CURR':
+            if self.prev_index:
+                self.grid[self.prev_index] = 0.5
+
+            self.prev_index = self.to_index(gx, gy)
+            self.grid[self.to_index(gx, gy)] = 2.
+
+        elif flag == 'NO_OBJ':
+            self.grid[self.to_index(gx, gy)] = 0.5
 
     def to_grid(self, px, py):
         """ Given an odometry point (px, py), return the grid point (gx, gy). """
@@ -50,8 +64,8 @@ class GridVisualiser:
 
         plt.xlabel('gx')
         plt.ylabel('gy')
-        plt.gca().invert_xaxis()
-        plt.title('Object of interest metric map')
+        # plt.gca().invert_xaxis()
+        plt.title('Object of interest metric map (absolute)')
 
     def setup_frame(self):
         self.ax.set_xlim(0, self.grid.eff_size)
@@ -59,4 +73,4 @@ class GridVisualiser:
 
     def plot_grid(self, frame):
         grid_2d = np.reshape(self.grid.grid, (self.grid.eff_size, self.grid.eff_size))
-        self.ax.pcolormesh(grid_2d, cmap=self.cmap, vmin=0., vmax=1.)
+        self.ax.pcolormesh(grid_2d, cmap=self.cmap, vmin=-1., vmax=2.)
