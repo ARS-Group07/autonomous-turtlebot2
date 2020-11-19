@@ -1,0 +1,3 @@
+<launch>
+  <node name="frontier_map" pkg="ars" type="frontiers.py" output="screen"/>
+</launch>

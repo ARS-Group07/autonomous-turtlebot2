@@ -3,13 +3,11 @@ import robot
 import rospy
 import thread
 
+
 class Sequencer:
     def __init__(self, robot):
         self.robot = robot
         self.robot.state = "wander"
-
-        #thread.start_new_thread( self.sequence ,() )
-        #yo yo yo yo
 
     def sequence(self):
         while not rospy.is_shutdown():
@@ -33,4 +31,3 @@ class Sequencer:
                 self.robot.move_forward()
 
             rate.sleep()
-            
