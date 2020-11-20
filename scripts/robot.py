@@ -1,7 +1,7 @@
 #import follow
 #from follow import Pose
 #from follow import wander
-import pose
+from pose import Pose
 import cv2
 import math
 import numpy as np
@@ -15,15 +15,10 @@ from sensor_msgs.msg import LaserScan, Image
 from tf.transformations import euler_from_quaternion
 
 class Robot:
-    def __init__(self, x=0., y=0., yaw=0., sequencer = None, grid = None):
-        self.pose = pose.Pose(x,y,yaw)
-        # Flags / states
-        self.state = "wander"
-        self.flag_obstacle_front = False
-        self.flag_obstacle_right = False
-        self.flag_imminentobstacle = False
-        self.flag_object = False
+    def __init__(self, x=0., y=0., yaw=0., sequencer = None, fov=3, grid = None):
+        self.pose = Pose(x,y,yaw)
         self.sequencer = sequencer
+        self.fov = fov
         self.grid = grid
 
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
@@ -37,32 +32,25 @@ class Robot:
         x = msg.pose.pose.position.x
         y = msg.pose.pose.position.y
 
-        self.pose = pose.Pose(x, y, yaw)
+        self.pose = Pose(x, y, yaw)
 
 
     def get_laser_data(self, msg):
-   
-        laser_data = msg.ranges[:31] + msg.ranges[-30:]
-        laser_data_right = msg.ranges[31:150]
-        distright = min(laser_data_right)
-        #rospy.loginfo('right_dist: ' + str(distright))
+        point_density = 4  # eg sample a laser beam every 3 degrees
+        plot_density = 0.125  # eg plot a probability point every 0.125 metres
 
-        dist = min(laser_data)
-        #rospy.loginfo('dist: ' + str(dist))
+        laser_range = int(self.fov / 2.)  # the positive and negative fov angles
+        laser_angles = list(range(-laser_range, 0, point_density)) + list(range(0, laser_range, point_density))
+        laser_distances = [msg.ranges[i] for i in laser_angles]  # sample the laser data every (point_density) points
 
-        if distright <= 1.0:
-            self.flag_obstacle_right = True
-        else:
-            self.flag_obstacle_right = False
-        if 0.25 < dist < 0.5:
-            self.flag_obstacle_front = True    
-        elif dist <= 0.25:
-            self.flag_imminentobstacle = True
-            self.flag_obstacle_front = True 
-        else: 
-            self.flag_obstacle_front = False
-            self.flag_imminentobstacle = False
+        # iterate through all those laser readings
+        for angle, dist in zip(laser_angles, laser_distances):
+            if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
+                dist = laser_range_max
 
+            plot_points = self.pose.plot_points_from_laser(angle, dist, plot_density)  # convert to a list of scanned points
+            for plot_point in plot_points:
+                self.grid.update_grid(plot_point[0], plot_point[1], 'NO_OBJ')  # update the grid at each point
 
     def get_image_data(self, msg):
         # TOD0

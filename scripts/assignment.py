@@ -10,6 +10,7 @@ import numpy as np
 from grids import Grid, GridVisualiser
 from nav_msgs.msg import Odometry, OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
+from matplotlib.animation import FuncAnimation
 
 def get_fov(msg):
     """ Loads CameraInfo message and returns horizontal field of view angle. """
@@ -65,9 +66,13 @@ if __name__ == '__main__':
         grid_vis = GridVisualiser(grid)
 # MAP END
 
-        theRobot = Robot(grid=grid)
+        theRobot = Robot(fov=fov, grid=grid)
         theRobot.sequencer = sequencer.Sequencer()
         theRobot.sequencer.sequence(theRobot)
+
+        animate = FuncAnimation(grid_vis.fig, grid_vis.plot_grid, init_func=grid_vis.setup_frame)
+        plt.show()
+        rospy.spin()
         
     except rospy.ROSInterruptException:
         rospy.loginfo('ROSInterruptException encountered at %s' % rospy.get_time())
