@@ -6,7 +6,7 @@ from matplotlib import pyplot as plt
 class Grid:
     """ Class representing a metric map, denoting obstacles and probabilities of objects of interest in the world. """
 
-    def __init__(self, size=19., resolution=0.125, map_arr=None):
+    def __init__(self, size=19.2, resolution=0.2, map_arr=None):
         self.origin_x = -10.  # from map .yaml file
         self.origin_y = -10.
         self.size = size
@@ -23,7 +23,7 @@ class Grid:
         """ Based on camera data, update the probability of an object of interest being present at each co-ordinate. """
         gx, gy = self.to_grid(px, py)
 
-        if self.grid[self.to_index(gx, gy)] == -1.:
+        if self.grid[self.to_index(gx, gy)] == -1. and flag == 'NO_OBJ':
             return
 
         if flag == 'CURR':
@@ -34,6 +34,8 @@ class Grid:
             self.grid[self.to_index(gx, gy)] = 2.
 
         elif flag == 'NO_OBJ':
+            if self.to_index(gx, gy) == self.prev_index:
+                return
             self.grid[self.to_index(gx, gy)] = 0.5
 
     def to_grid(self, px, py):

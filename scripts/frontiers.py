@@ -28,7 +28,7 @@ class Pose:
 
     def plot_points_from_laser(self, angle, distance, density):
         """ Takes in a distance and angle from the laser, and returns a list of points to update on the graph. """
-        threshold = 0.2  # to avoid updating on the other side of a wall etc.
+        threshold = 0.5  # to avoid updating on the other side of a wall etc.
         rad_angle = angle * math.pi / 180.
         num_points = int((distance / density) + 1)
 
@@ -43,9 +43,11 @@ class Pose:
         return plot_points
 
 
-def downsample(m, size, ratio):
-    """ Resizes an image to size * ratio px. """
-    return cv2.resize(m, dsize=(int(size * ratio), int(size * ratio)), interpolation=cv2.INTER_AREA)
+def rotate_image(image, angle):
+    image_center = tuple(np.array(image.shape[1::-1]) / 2)
+    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
+    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
+    return result
 
 
 def create_map_array(map_data, map_meta):
@@ -54,16 +56,14 @@ def create_map_array(map_data, map_meta):
     map_height = map_meta.height
     map_res = map_meta.resolution
 
-    grid_size = 19.
-    grid_res = 0.125
+    grid_size = 19.2
+    grid_res = 0.2
     grid_eff_size = int(grid_size / grid_res)
 
     np_map = np.reshape(np.array(map_data), [map_width, map_height])  # convert the input map to np array
-    np_map = np_map[:380, 4:]  # crop to make our grid fit the map
-
-    obstacle_map = np.where(np_map > 65, 255, 0).astype('float32')  # mask the array where there are obstacles detected
+    obstacle_map = np.where(np_map > 0, 255., 0.)  # mask the array where there are obstacles detected
     obstacle_map = cv2.resize(obstacle_map, dsize=(grid_eff_size, grid_eff_size), interpolation=cv2.INTER_AREA)
-    obstacle_map = np.where(obstacle_map > 25, -1., -0.25)  # finally assign obstacles to -1., all else to 0.5
+    obstacle_map = np.where(obstacle_map > 0, -1., -0.25)  # finally assign obstacles to -1., all else to 0.5
 
     return obstacle_map.ravel()
 
@@ -97,7 +97,7 @@ def get_odom_data(msg):
 def get_laser_data(msg):
     global fov, laser_range_max, grid, pose
     point_density = 4  # eg sample a laser beam every 3 degrees
-    plot_density = 0.125  # eg plot a probability point every 0.125 metres
+    plot_density = 0.2  # eg plot a probability point every 0.125 metres
 
     laser_range = int(fov / 2.)  # the positive and negative fov angles
     laser_angles = list(range(-laser_range, 0, point_density)) + list(range(0, laser_range, point_density))
