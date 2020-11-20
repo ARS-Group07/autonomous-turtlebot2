@@ -7,6 +7,7 @@ import math
 import numpy as np
 import random
 import rospy
+import sequencer
 
 from cv_bridge import CvBridge
 from geometry_msgs.msg import Twist

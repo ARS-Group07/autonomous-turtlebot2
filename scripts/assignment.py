@@ -9,8 +9,8 @@ if __name__ == '__main__':
     try:
         rospy.init_node('assignment_node', anonymous=True)
 
-        theRobot.sequencer = sequencer.Sequencer(theRobot)
-        theRobot.sequencer.sequence()
+        theRobot.sequencer = sequencer.Sequencer()
+        theRobot.sequencer.sequence(robot)
         
     except rospy.ROSInterruptException:
         rospy.loginfo('ROSInterruptException encountered at %s' % rospy.get_time())
