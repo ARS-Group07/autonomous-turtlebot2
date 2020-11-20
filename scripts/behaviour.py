@@ -7,4 +7,4 @@ class Behaviour:
         self.name = name
 
     def act(self, robot, sequencer):
-        print("Base behaviour act method called. Should override.")
+        robot.grid.update_grid(px, py, 'CURR')

@@ -27,7 +27,7 @@ def twist_msg(lin_vel=0., ang_vel=0.):
     return msg
 
 class Robot:
-    def __init__(self, x=0., y=0., yaw=0., sequencer = None):
+    def __init__(self, x=0., y=0., yaw=0., sequencer = None, grid = None):
         self.pose = pose.Pose(x,y,yaw)
         # Flags / states
         self.state = "wander"
@@ -36,6 +36,7 @@ class Robot:
         self.flag_imminentobstacle = False
         self.flag_object = False
         self.sequencer = sequencer
+        self.grid = grid
 
         self.publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)

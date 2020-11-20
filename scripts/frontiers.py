@@ -68,19 +68,6 @@ def create_map_array(map_data, map_meta):
     return obstacle_map.ravel()
 
 
-def get_fov(msg):
-    """ Loads CameraInfo message and returns horizontal field of view angle. """
-    focal_length = msg.K[0]
-    w = msg.width
-    rospy.loginfo('Got focal length x: ' + str(focal_length))
-
-    # formula for getting horizontal field of view angle (rad) from focal length
-    fov = 2 * math.atan2(w, (2 * focal_length))
-
-    # return field of view in degrees
-    return fov * 180 / math.pi
-
-
 def get_odom_data(msg):
     global grid, pose
 
@@ -133,10 +120,7 @@ if __name__ == '__main__':
 
     rospy.loginfo('laser range: ' + str(laser_range_max))
 
-    map_arr = create_map_array(occupancy_map, map_metadata)
 
-    grid = Grid(map_arr=map_arr)
-    grid_vis = GridVisualiser(grid)
 
     try:
         rospy.loginfo('fov: ' + str(fov))
