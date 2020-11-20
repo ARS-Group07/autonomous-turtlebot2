@@ -57,22 +57,23 @@ if __name__ == '__main__':
                     '\nresolution: ' + str(map_metadata.resolution))
 
         camera_metadata = rospy.wait_for_message('camera/rgb/camera_info', CameraInfo, timeout=15)
-        laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=5).range_max  # max distance that laser detects
+        laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=15).range_max  # max distance that laser detects
         fov = get_fov(camera_metadata)  # the field of view of the camera
 
         map_arr = create_map_array(occupancy_map, map_metadata)
 
         grid = Grid(map_arr=map_arr)
         grid_vis = GridVisualiser(grid)
+
+        animate = FuncAnimation(grid_vis.fig, grid_vis.plot_grid, init_func=grid_vis.setup_frame)
+        rospy.loginfo("Showing graph")
+        plt.show(block=False)
+        rospy.loginfo("Showed graph")
 # MAP END
 
         theRobot = Robot(fov=fov, grid=grid)
         theRobot.sequencer = sequencer.Sequencer()
         theRobot.sequencer.sequence(theRobot)
-
-        animate = FuncAnimation(grid_vis.fig, grid_vis.plot_grid, init_func=grid_vis.setup_frame)
-        plt.show()
-        rospy.spin()
         
     except rospy.ROSInterruptException:
         rospy.loginfo('ROSInterruptException encountered at %s' % rospy.get_time())

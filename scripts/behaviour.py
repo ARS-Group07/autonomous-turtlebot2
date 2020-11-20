@@ -8,4 +8,4 @@ class Behaviour:
         self.name = name
 
     def act(self, robot, sequencer):
-        robot.grid.update_grid(robot.pose.x, robot.pose.y, 'CURR')
+        print("Error: child class should override this")

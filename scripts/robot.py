@@ -33,6 +33,7 @@ class Robot:
         y = msg.pose.pose.position.y
 
         self.pose = Pose(x, y, yaw)
+        self.grid.update_grid(self.pose.x, self.pose.y, 'CURR')
 
 
     def get_laser_data(self, msg):
