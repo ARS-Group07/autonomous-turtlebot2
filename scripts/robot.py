@@ -10,21 +10,9 @@ import rospy
 import sequencer
 
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan, Image
 from tf.transformations import euler_from_quaternion
-
-def twist_msg(lin_vel=0., ang_vel=0.):
-    """ Creates a Twist object to be published, with only linear and angular velocity values set. """
-    msg = Twist()
-    msg.linear.x = lin_vel
-    msg.linear.y = 0.
-    msg.linear.z = 0.
-    msg.angular.x = 0.
-    msg.angular.y = 0.
-    msg.angular.z = ang_vel
-    return msg
 
 class Robot:
     def __init__(self, x=0., y=0., yaw=0., sequencer = None, grid = None):
@@ -38,18 +26,9 @@ class Robot:
         self.sequencer = sequencer
         self.grid = grid
 
-        self.publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
         rospy.Subscriber('odom', Odometry, self.get_odom_data)
         rospy.Subscriber('camera/rgb/image_raw', Image, self.get_image_data)
-
-        
-    def turn_left(self):
-        self.publisher.publish(twist_msg(0., 0.2))
-    def turn_right(self):
-        self.publisher.publish(twist_msg(0.2, -0.2))
-    def move_forward(self):
-        self.publisher.publish(twist_msg(0.2, 0.))
             
     def get_odom_data(self, msg):
         """ Converts to euler angles, saves the received odom data as a dictionary and appends to global odom_msgs list. """
@@ -88,3 +67,6 @@ class Robot:
     def get_image_data(self, msg):
         # TOD0
         test = 1
+
+    def get_grid():
+        return self.grid

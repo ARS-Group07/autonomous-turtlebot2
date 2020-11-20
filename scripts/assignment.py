@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 #
 import rospy
-import robot
+from robot import Robot
 import sequencer
 import math
 import cv2
@@ -47,15 +47,15 @@ if __name__ == '__main__':
         rospy.init_node('assignment_node', anonymous=True)
 
 # MAP START
-        occupancy_map = rospy.wait_for_message('/map', OccupancyGrid, timeout=5).data
-        map_metadata = rospy.wait_for_message('/map_metadata', MapMetaData, timeout=5)
+        occupancy_map = rospy.wait_for_message('/map', OccupancyGrid, timeout=15).data
+        map_metadata = rospy.wait_for_message('/map_metadata', MapMetaData, timeout=15)
         rospy.loginfo('occupancy map type: ' + str(type(occupancy_map)))
         rospy.loginfo('occupancy map shape: ' + str(len(occupancy_map)))
         rospy.loginfo('occupancy map metadata: \nheight: ' + str(map_metadata.height) +
                     '\nwidth: ' + str(map_metadata.width) +
                     '\nresolution: ' + str(map_metadata.resolution))
 
-        camera_metadata = rospy.wait_for_message('camera/rgb/camera_info', CameraInfo, timeout=5)
+        camera_metadata = rospy.wait_for_message('camera/rgb/camera_info', CameraInfo, timeout=15)
         laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=5).range_max  # max distance that laser detects
         fov = get_fov(camera_metadata)  # the field of view of the camera
 
@@ -65,9 +65,9 @@ if __name__ == '__main__':
         grid_vis = GridVisualiser(grid)
 # MAP END
 
-        theRobot = robot.Robot(grid=grid)
+        theRobot = Robot(grid=grid)
         theRobot.sequencer = sequencer.Sequencer()
-        theRobot.sequencer.sequence(robot)
+        theRobot.sequencer.sequence(theRobot)
         
     except rospy.ROSInterruptException:
         rospy.loginfo('ROSInterruptException encountered at %s' % rospy.get_time())
