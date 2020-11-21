@@ -12,77 +12,40 @@ from sensor_msgs.msg import CameraInfo, LaserScan
 from tf.transformations import euler_from_quaternion
 
 from grids import Grid, GridVisualiser
-
-
-class Pose:
-
-    def __init__(self, px, py, yaw):
-        self.px = px
-        self.py = py
-        self.yaw = yaw
-
-    def update_pose(self, px, py, yaw):
-        self.px = px
-        self.py = py
-        self.yaw = yaw
-
-    def plot_points_from_laser(self, angle, distance, density):
-        """ Takes in a distance and angle from the laser, and returns a list of points to update on the graph. """
-        threshold = 0.5  # to avoid updating on the other side of a wall etc.
-        rad_angle = angle * math.pi / 180.
-        num_points = int((distance / density) + 1)
-
-        plot_points = []
-
-        for i in range(num_points):
-            curr_dist = max(distance - (i * density) - threshold, 0.)
-            pxx = self.px + (curr_dist * math.cos(self.yaw + rad_angle))
-            pyy = self.py + (curr_dist * math.sin(self.yaw + rad_angle))
-            plot_points.append([pxx, pyy])
-
-        return plot_points
-
-
-def rotate_image(image, angle):
-    image_center = tuple(np.array(image.shape[1::-1]) / 2)
-    rot_mat = cv2.getRotationMatrix2D(image_center, angle, 1.0)
-    result = cv2.warpAffine(image, rot_mat, image.shape[1::-1], flags=cv2.INTER_LINEAR)
-    return result
-
-
-def create_map_array(map_data, map_meta):
-    """ On startup, get obstacle data from occupancy map and fill in the walls on our grid. """
-    map_width = map_meta.width
-    map_height = map_meta.height
-    map_res = map_meta.resolution
-
-    grid_size = 19.2
-    grid_res = 0.2
-    grid_eff_size = int(grid_size / grid_res)
-
-    np_map = np.reshape(np.array(map_data), [map_width, map_height])  # convert the input map to np array
-    obstacle_map = np.where(np_map > 0, 255., 0.)  # mask the array where there are obstacles detected
-    obstacle_map = cv2.resize(obstacle_map, dsize=(grid_eff_size, grid_eff_size), interpolation=cv2.INTER_AREA)
-    obstacle_map = np.where(obstacle_map > 0, -1., -0.25)  # finally assign obstacles to -1., all else to 0.5
-
-    return obstacle_map.ravel()
+from pose import Pose
 
 
 def get_fov(msg):
     """ Loads CameraInfo message and returns horizontal field of view angle. """
     focal_length = msg.K[0]
     w = msg.width
-    rospy.loginfo('Got focal length x: ' + str(focal_length))
 
     # formula for getting horizontal field of view angle (rad) from focal length
     fov = 2 * math.atan2(w, (2 * focal_length))
 
     # return field of view in degrees
-    return fov * 180 / math.pi
+    return round(fov * 180 / math.pi)
 
 
-def get_odom_data(msg):
-    global grid, pose
+def create_map_array(map_data, map_meta, grid_resolution):
+    """ On startup, get obstacle data from occupancy map and fill in the walls on our grid. """
+    map_width = map_meta.width
+    map_height = map_meta.height
+
+    grid_size = round(map_width * map_meta.resolution, 1)
+    grid_eff_size = int(grid_size / grid_resolution)
+
+    np_map = np.reshape(np.array(map_data), [map_height, map_width])  # convert the 1D input map to a 2D np array
+    obstacle_map = np.where(np.logical_or((np_map > 0), (np_map < -0.5)), 255., 0.)  # mask obstacles and unmapped areas
+    obstacle_map = cv2.resize(obstacle_map, dsize=(grid_eff_size, grid_eff_size), interpolation=cv2.INTER_AREA)
+    obstacle_map = np.where(obstacle_map > 0, -1., 0.5)  # finally assign inaccessible areas to -1., all else to 0.5
+
+    return obstacle_map
+
+
+def get_odom_data(msg, options):
+    grid = options['grid']
+    pose = options['pose']
 
     quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
                    msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
@@ -90,59 +53,57 @@ def get_odom_data(msg):
     px = msg.pose.pose.position.x
     py = msg.pose.pose.position.y
 
-    grid.update_grid(px, py, 'CURR')
+    grid.update_grid(px, py, flag='CURR')
     pose.update_pose(px, py, yaw)
 
 
-def get_laser_data(msg):
-    global fov, laser_range_max, grid, pose
-    point_density = 4  # eg sample a laser beam every 3 degrees
-    plot_density = 0.2  # eg plot a probability point every 0.125 metres
+def get_laser_data(msg, options):
+    density = options['density']
+    angles = options['angles']
+    grid = options['grid']
+    pose = options['pose']
 
-    laser_range = int(fov / 2.)  # the positive and negative fov angles
-    laser_angles = list(range(-laser_range, 0, point_density)) + list(range(0, laser_range, point_density))
-    laser_distances = [msg.ranges[i] for i in laser_angles]  # sample the laser data every (point_density) points
+    laser_distances = [msg.ranges[i] for i in angles]
 
-    # iterate through all those laser readings
-    for angle, dist in zip(laser_angles, laser_distances):
+    for angle, dist in zip(angles, laser_distances):
         if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
             dist = laser_range_max
 
-        plot_points = pose.plot_points_from_laser(angle, dist, plot_density)  # convert to a list of scanned points
+        plot_points = pose.plot_points_from_laser(angle, dist, density)  # convert to a list of scanned points
         for plot_point in plot_points:
-            grid.update_grid(plot_point[0], plot_point[1], 'NO_OBJ')  # update the grid at each point
+            grid.update_grid(plot_point[0], plot_point[1], flag='NO_OBJ')  # update the grid at each point
 
 
 if __name__ == '__main__':
-
+    # wait for all important messages to arrive from various nodes
     rospy.init_node('frontier_map', anonymous=True)
-    pose = Pose(0, 0, 0)
-
-    # Initialise sensors and important attributes
     occupancy_map = rospy.wait_for_message('/map', OccupancyGrid, timeout=5).data
     map_metadata = rospy.wait_for_message('/map_metadata', MapMetaData, timeout=5)
-    rospy.loginfo('occupancy map type: ' + str(type(occupancy_map)))
-    rospy.loginfo('occupancy map shape: ' + str(len(occupancy_map)))
-    rospy.loginfo('occupancy map metadata: \nheight: ' + str(map_metadata.height) +
-                  '\nwidth: ' + str(map_metadata.width) +
-                  '\nresolution: ' + str(map_metadata.resolution))
-
     camera_metadata = rospy.wait_for_message('camera/rgb/camera_info', CameraInfo, timeout=5)
-    laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=5).range_max  # max distance that laser detects
+    laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=5).range_max
+
+    # ========== SETTINGS ==========
+    pose = Pose(0, 0, 0)
+    grid_resolution = 0.2
+    laser_density = 4  # eg sample a laser beam every 4 degrees
     fov = get_fov(camera_metadata)  # the field of view of the camera
+    rospy.loginfo('fov: ' + str(fov))
+    laser_angles = list(range(-int(fov / 2.), 0, laser_density)) + list(range(0, int(fov / 2.), laser_density))
 
-    rospy.loginfo('laser range: ' + str(laser_range_max))
-
-    map_arr = create_map_array(occupancy_map, map_metadata)
-
+    # grid and visualiser initialisation
+    map_arr = create_map_array(occupancy_map, map_metadata, grid_resolution)
     grid = Grid(map_arr=map_arr)
     grid_vis = GridVisualiser(grid)
 
-    try:
-        rospy.loginfo('fov: ' + str(fov))
-        rospy.Subscriber('odom', Odometry, get_odom_data)
-        rospy.Subscriber('scan', LaserScan, get_laser_data)
+    odom_options = {'grid': grid, 'pose': pose}
+    laser_options = {'density': grid_resolution, 'angles': laser_angles, 'grid': grid, 'pose': pose}
 
+    try:
+        # subscribe to necessary nodes
+        rospy.Subscriber('odom', Odometry, get_odom_data, odom_options)
+        rospy.Subscriber('scan', LaserScan, get_laser_data, laser_options)
+
+        # begin animation and show the visualiser
         animate = FuncAnimation(grid_vis.fig, grid_vis.plot_grid, init_func=grid_vis.setup_frame)
         plt.show()
         rospy.spin()
