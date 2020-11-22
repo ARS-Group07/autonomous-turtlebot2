@@ -6,6 +6,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import rospy
+from cv_bridge import CvBridge
 from matplotlib.animation import FuncAnimation
 from nav_msgs.msg import Odometry, OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
@@ -13,6 +14,43 @@ from tf.transformations import euler_from_quaternion
 
 from grids import Grid, GridVisualiser
 from pose import Pose
+
+
+class AreaOfInterestFinder:
+    def __init__(self, grid):
+        self.grid = grid
+        cv2.namedWindow('unexplored_contours', 1)
+
+    def get_grid_contours(self):
+        image = self.grid.grid
+        (h, w) = self.grid.grid.shape
+        image = cv2.resize(image, (w * 4, h * 4))  # get larger version for display etc
+        image = cv2.flip(image, 0)  # flip mask vertically cuz cv2 :)
+        unexplored_mask = cv2.inRange(image, 0.499, 0.501)
+
+        # find all discrete unexplored areas
+        _, contours, hierarchy = cv2.findContours(unexplored_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        for i, c in enumerate(contours):
+            # don't include sub-contours ie. the holes in the white areas
+            if hierarchy[0][i][3] != -1:
+                continue
+
+            m = cv2.moments(c)
+            area = m['m00']
+
+            # don't include very small areas as areas of interest
+            if area < 25.:
+                continue
+
+            cx = int(m['m10'] / m['m00'])
+            cy = int(m['m01'] / m['m00'])
+
+            # draw a circle on each discrete object; size of circle corresponds to area of contour
+            cv2.circle(unexplored_mask, (cx, cy), int((area ** 0.33) / 2), 127, -1)
+
+        cv2.imshow('unexplored_contours', unexplored_mask)
+        cv2.waitKey(3)
 
 
 def get_fov(msg):
@@ -35,10 +73,10 @@ def create_map_array(map_data, map_meta, grid_resolution):
     grid_size = round(map_width * map_meta.resolution, 1)
     grid_eff_size = int(grid_size / grid_resolution)
 
-    np_map = np.reshape(np.array(map_data), [map_height, map_width])  # convert the 1D input map to a 2D np array
+    np_map = np.reshape(np.array(map_data), [map_height, map_width]) # convert the 1D input map to a 2D np array
     obstacle_map = np.where(np.logical_or((np_map > 0), (np_map < -0.5)), 255., 0.)  # mask obstacles and unmapped areas
     obstacle_map = cv2.resize(obstacle_map, dsize=(grid_eff_size, grid_eff_size), interpolation=cv2.INTER_AREA)
-    obstacle_map = np.where(obstacle_map > 0, -1., 0.5)  # finally assign inaccessible areas to -1., all else to 0.5
+    obstacle_map = np.where(obstacle_map > 0, -1., 0.5).astype('float32')  # inaccessible areas to -1., all else to 0.5
 
     return obstacle_map
 
@@ -62,6 +100,7 @@ def get_laser_data(msg, options):
     angles = options['angles']
     grid = options['grid']
     pose = options['pose']
+    aoif = options['aoif']
 
     laser_distances = [msg.ranges[i] for i in angles]
 
@@ -72,6 +111,9 @@ def get_laser_data(msg, options):
         plot_points = pose.plot_points_from_laser(angle, dist, density)  # convert to a list of scanned points
         for plot_point in plot_points:
             grid.update_grid(plot_point[0], plot_point[1], flag='NO_OBJ')  # update the grid at each point
+
+    # build contours here
+    aoif.get_grid_contours()
 
 
 if __name__ == '__main__':
@@ -94,9 +136,10 @@ if __name__ == '__main__':
     map_arr = create_map_array(occupancy_map, map_metadata, grid_resolution)
     grid = Grid(map_arr=map_arr)
     grid_vis = GridVisualiser(grid)
+    aoif = AreaOfInterestFinder(grid)
 
     odom_options = {'grid': grid, 'pose': pose}
-    laser_options = {'density': grid_resolution, 'angles': laser_angles, 'grid': grid, 'pose': pose}
+    laser_options = {'density': grid_resolution, 'angles': laser_angles, 'grid': grid, 'pose': pose, 'aoif': aoif}
 
     try:
         # subscribe to necessary nodes

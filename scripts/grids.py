@@ -1,5 +1,4 @@
 import matplotlib.colors
-import numpy as np
 import rospy
 from matplotlib import pyplot as plt
 
