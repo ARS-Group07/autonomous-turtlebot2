@@ -21,6 +21,7 @@ class Sequencer:
 
         while not rospy.is_shutdown():
             rospy.loginfo("Behaviour: " + self.current_behaviour.name)
+            robot.publish_grid()
             self.current_behaviour.act(robot, self)
             rate.sleep()
 

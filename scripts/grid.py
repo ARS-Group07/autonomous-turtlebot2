@@ -2,7 +2,6 @@ import numpy as np
 import rospy
 from matplotlib import pyplot as plt
 
-
 class Grid:
     """ Class representing a metric map, denoting obstacles and probabilities of objects of interest in the world. """
 
@@ -53,24 +52,3 @@ class Grid:
         return int(gy * self.eff_size + gx)
 
 
-class GridVisualiser:
-    """ Visualiser class for the grid. """
-
-    def __init__(self, input_grid):
-        self.grid = input_grid
-        self.fig, self.ax = plt.subplots()
-        self.fig.set_size_inches(6, 6)
-        self.cmap = plt.get_cmap('coolwarm')
-
-        plt.xlabel('gx')
-        plt.ylabel('gy')
-        # plt.gca().invert_xaxis()
-        plt.title('Object of interest metric map (absolute)')
-
-    def setup_frame(self):
-        self.ax.set_xlim(0, self.grid.eff_size)
-        self.ax.set_ylim(0, self.grid.eff_size)
-
-    def plot_grid(self, frame):
-        grid_2d = np.reshape(self.grid.grid, (self.grid.eff_size, self.grid.eff_size))
-        self.ax.pcolormesh(grid_2d, cmap=self.cmap, vmin=-1., vmax=2.)

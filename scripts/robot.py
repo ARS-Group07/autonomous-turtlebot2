@@ -12,6 +12,7 @@ import sequencer
 from cv_bridge import CvBridge
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan, Image
+from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
 class Robot:
@@ -21,6 +22,7 @@ class Robot:
         self.fov = fov
         self.grid = grid
 
+        self.grid_publisher = rospy.Publisher('grid_plot', String, queue_size=10)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
         rospy.Subscriber('odom', Odometry, self.get_odom_data)
         rospy.Subscriber('camera/rgb/image_raw', Image, self.get_image_data)
@@ -57,5 +59,12 @@ class Robot:
         # TOD0
         test = 1
 
-    def get_grid():
+    def get_grid(self):
         return self.grid
+
+    def publish_grid(self):
+        arr = np.array(self.grid.grid)
+        row = arr.shape
+        rospy.loginfo("DIms: " + str(row))
+        #self.grid_publisher.publish(str(1))
+        self.grid_publisher.publish(arr.tostring())

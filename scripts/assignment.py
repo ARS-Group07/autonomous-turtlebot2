@@ -7,7 +7,7 @@ import math
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-from grids import Grid, GridVisualiser
+from grid import Grid
 from nav_msgs.msg import Odometry, OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
 from matplotlib.animation import FuncAnimation
@@ -61,14 +61,7 @@ if __name__ == '__main__':
         fov = get_fov(camera_metadata)  # the field of view of the camera
 
         map_arr = create_map_array(occupancy_map, map_metadata)
-
         grid = Grid(map_arr=map_arr)
-        grid_vis = GridVisualiser(grid)
-
-        animate = FuncAnimation(grid_vis.fig, grid_vis.plot_grid, init_func=grid_vis.setup_frame)
-        rospy.loginfo("Showing graph")
-        plt.show(block=False)
-        rospy.loginfo("Showed graph")
 # MAP END
 
         theRobot = Robot(fov=fov, grid=grid)

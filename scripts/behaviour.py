@@ -1,7 +1,6 @@
 from behaviour import *
 from sequencer import *
 from pose import Pose
-from grids import *
 
 class Behaviour:
     def __init__(self, name):
