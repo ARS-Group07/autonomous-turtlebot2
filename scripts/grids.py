@@ -73,3 +73,4 @@ class GridVisualiser:
 
     def plot_grid(self, frame):
         self.ax.pcolormesh(self.grid.grid, cmap=self.cmap, vmin=-1., vmax=3.)
+

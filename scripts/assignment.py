@@ -3,70 +3,46 @@
 import rospy
 from robot import Robot
 import sequencer
-import math
-import cv2
+import messagehelper
 import matplotlib.pyplot as plt
-import numpy as np
-from grid import Grid
+
+from areaofinterest import AreaOfInterestFinder
+from grids import Grid, GridVisualiser
 from nav_msgs.msg import Odometry, OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
 from matplotlib.animation import FuncAnimation
-
-def get_fov(msg):
-    """ Loads CameraInfo message and returns horizontal field of view angle. """
-    focal_length = msg.K[0]
-    w = msg.width
-    rospy.loginfo('Got focal length x: ' + str(focal_length))
-
-    # formula for getting horizontal field of view angle (rad) from focal length
-    fov = 2 * math.atan2(w, (2 * focal_length))
-
-    # return field of view in degrees
-    return fov * 180 / math.pi
-
-def create_map_array(map_data, map_meta):
-    """ On startup, get obstacle data from occupancy map and fill in the walls on our grid. """
-    map_width = map_meta.width
-    map_height = map_meta.height
-    map_res = map_meta.resolution
-
-    grid_size = 19.
-    grid_res = 0.125
-    grid_eff_size = int(grid_size / grid_res)
-
-    np_map = np.reshape(np.array(map_data), [map_width, map_height])  # convert the input map to np array
-    np_map = np_map[:380, 4:]  # crop to make our grid fit the map
-
-    obstacle_map = np.where(np_map > 65, 255, 0).astype('float32')  # mask the array where there are obstacles detected
-    obstacle_map = cv2.resize(obstacle_map, dsize=(grid_eff_size, grid_eff_size), interpolation=cv2.INTER_AREA)
-    obstacle_map = np.where(obstacle_map > 25, -1., -0.25)  # finally assign obstacles to -1., all else to 0.5
-
-    return obstacle_map.ravel()
 
 if __name__ == '__main__':
     try:
         rospy.init_node('assignment_node', anonymous=True)
 
-# MAP START
-        occupancy_map = rospy.wait_for_message('/map', OccupancyGrid, timeout=15).data
-        map_metadata = rospy.wait_for_message('/map_metadata', MapMetaData, timeout=15)
-        rospy.loginfo('occupancy map type: ' + str(type(occupancy_map)))
-        rospy.loginfo('occupancy map shape: ' + str(len(occupancy_map)))
-        rospy.loginfo('occupancy map metadata: \nheight: ' + str(map_metadata.height) +
-                    '\nwidth: ' + str(map_metadata.width) +
-                    '\nresolution: ' + str(map_metadata.resolution))
+        # wait for all important messages to arrive from various nodes
+        occupancy_map = rospy.wait_for_message('/map', OccupancyGrid, timeout=5).data
+        map_metadata = rospy.wait_for_message('/map_metadata', MapMetaData, timeout=5)
+        camera_metadata = rospy.wait_for_message('camera/rgb/camera_info', CameraInfo, timeout=5)
+        laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=5).range_max
 
-        camera_metadata = rospy.wait_for_message('camera/rgb/camera_info', CameraInfo, timeout=15)
-        laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=15).range_max  # max distance that laser detects
-        fov = get_fov(camera_metadata)  # the field of view of the camera
+        # ========== SETTINGS ==========
+        grid_resolution = 0.2
+        laser_density = 4  # eg sample a laser beam every 4 degrees
+        fov = messagehelper.get_fov(camera_metadata)  # the field of view of the camera
+        rospy.loginfo('fov: ' + str(fov))
+        laser_angles = list(range(-int(fov / 2.), 0, laser_density)) + list(range(0, int(fov / 2.), laser_density))
 
-        map_arr = create_map_array(occupancy_map, map_metadata)
+        # ========== grid and visualiser initialisation ==========
+        map_arr = messagehelper.create_map_array(occupancy_map, map_metadata, grid_resolution)
         grid = Grid(map_arr=map_arr)
-# MAP END
+        grid_vis = GridVisualiser(grid)
+        # Show the grid visualiser
+        plt.show(block=False)
+        animate = FuncAnimation(grid_vis.fig, grid_vis.plot_grid, init_func=grid_vis.setup_frame)
+        # Instantiate and show the AOI Finder
+        aoif = AreaOfInterestFinder(grid)
 
-        theRobot = Robot(fov=fov, grid=grid)
-        theRobot.sequencer = sequencer.Sequencer()
-        theRobot.sequencer.sequence(theRobot)
+        the_robot = Robot(grid=grid, aoif=aoif,
+                          laser_density = laser_density, laser_angles = laser_angles,laser_range_max=laser_range_max)
+        the_robot.sequencer = sequencer.Sequencer()
+        the_robot.sequencer.sequence(the_robot)
         
     except rospy.ROSInterruptException:
         rospy.loginfo('ROSInterruptException encountered at %s' % rospy.get_time())
