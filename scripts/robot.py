@@ -1,27 +1,21 @@
-#import follow
-#from follow import Pose
-#from follow import wander
 from pose import Pose
-import cv2
 import math
 import rospy
 
-from cv_bridge import CvBridge
-from areaofinterest import AreaOfInterestFinder
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan, Image
-from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
+
 class Robot:
-    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer = None):
+    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer=None):
         self.grid = grid
         self.grid_resolution = grid_resolution
-        self.grid_vis=grid_vis
+        self.grid_vis = grid_vis
         self.aoif = aoif
         self.laser_angles = laser_angles
         self.laser_range_max = laser_range_max
-        self.pose = Pose(x,y,yaw)
+        self.pose = Pose(x, y, yaw)
         self.sequencer = sequencer
 
         rospy.Subscriber('odom', Odometry, self.get_odom_data)
@@ -37,10 +31,7 @@ class Robot:
 
         self.pose.update_pose(px, py, yaw)
         self.grid.update_grid(px, py, flag='CURR')
-
-        # build contours here
         self.grid_vis.update_plot()
-        self.aoif.get_grid_contours()
 
     def get_laser_data(self, msg):
         laser_distances = [msg.ranges[i] for i in self.laser_angles]
@@ -54,7 +45,6 @@ class Robot:
                 self.grid.update_grid(plot_point[0], plot_point[1], flag='NO_OBJ')  # update the grid at each point
 
         # build contours here
-        self.grid_vis.update_plot()
         self.aoif.get_grid_contours()
 
     def get_image_data(self, msg):

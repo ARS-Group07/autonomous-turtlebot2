@@ -4,13 +4,12 @@ import rospy
 from robot import Robot
 import sequencer
 import messagehelper
-import matplotlib.pyplot as plt
 
 from areaofinterest import AreaOfInterestFinder
 from grids import Grid, GridVisualiser
-from nav_msgs.msg import Odometry, OccupancyGrid, MapMetaData
+from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
-from matplotlib.animation import FuncAnimation
+
 
 if __name__ == '__main__':
     try:
@@ -36,8 +35,8 @@ if __name__ == '__main__':
         grid_vis = GridVisualiser(grid)
         aoif = AreaOfInterestFinder(grid)
 
-        the_robot = Robot(grid=grid, grid_resolution = grid_resolution, grid_vis=grid_vis,
-                          aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max)
+        the_robot = Robot(grid=grid, grid_vis=grid_vis, aoif=aoif,
+                          grid_resolution = grid_resolution, laser_angles = laser_angles,laser_range_max=laser_range_max)
         the_robot.sequencer = sequencer.Sequencer()
         the_robot.sequencer.sequence(the_robot)
         
