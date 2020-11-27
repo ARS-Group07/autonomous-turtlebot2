@@ -20,7 +20,7 @@ class Sequencer:
         rate = rospy.Rate(25)
 
         while not rospy.is_shutdown():
-            rospy.loginfo("Behaviour: " + self.current_behaviour.name)
+            #rospy.loginfo("Behaviour: " + self.current_behaviour.name)
             self.current_behaviour.act(robot, self)
             rate.sleep()
 

@@ -14,8 +14,9 @@ from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
 class Robot:
-    def __init__(self, grid, aoif, laser_density, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer = None):
+    def __init__(self, grid, grid_vis, aoif, laser_density, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer = None):
         self.grid = grid
+        self.grid_vis=grid_vis
         self.aoif = aoif
         self.laser_density = laser_density
         self.laser_angles = laser_angles
@@ -37,6 +38,10 @@ class Robot:
         self.grid.update_grid(px, py, flag='CURR')
         self.pose.update_pose(px, py, yaw)
 
+        # build contours here
+        self.grid_vis.update_plot()
+        self.aoif.get_grid_contours()
+
     def get_laser_data(self, msg):
         laser_distances = [msg.ranges[i] for i in self.laser_angles]
 
@@ -49,6 +54,7 @@ class Robot:
                 self.grid.update_grid(plot_point[0], plot_point[1], flag='NO_OBJ')  # update the grid at each point
 
         # build contours here
+        self.grid_vis.update_plot()
         self.aoif.get_grid_contours()
 
     def get_image_data(self, msg):

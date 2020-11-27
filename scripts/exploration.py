@@ -7,5 +7,6 @@ class Exploration(Behaviour):
         Behaviour.__init__(self, "Exploration")
 
     def act(self, robot, sequencer):
-        print("Test.")
+        i = 1
+        #print("Test.")
         #sequencer.descend_behaviour()

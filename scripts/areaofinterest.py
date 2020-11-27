@@ -34,4 +34,4 @@ class AreaOfInterestFinder:
             cv2.circle(unexplored_mask, (cx, cy), int((area ** 0.33) / 2), 127, -1)
 
         cv2.imshow('unexplored_contours', unexplored_mask)
-        cv2.waitKey(3)
+        cv2.waitKey(1)
