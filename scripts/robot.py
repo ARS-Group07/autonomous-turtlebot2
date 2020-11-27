@@ -1,88 +1,62 @@
 #import follow
 #from follow import Pose
 #from follow import wander
-import pose
+from pose import Pose
 import cv2
 import math
-import numpy as np
-import random
 import rospy
 
 from cv_bridge import CvBridge
-from geometry_msgs.msg import Twist
+from areaofinterest import AreaOfInterestFinder
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan, Image
+from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
-def twist_msg(lin_vel=0., ang_vel=0.):
-    """ Creates a Twist object to be published, with only linear and angular velocity values set. """
-    msg = Twist()
-    msg.linear.x = lin_vel
-    msg.linear.y = 0.
-    msg.linear.z = 0.
-    msg.angular.x = 0.
-    msg.angular.y = 0.
-    msg.angular.z = ang_vel
-    return msg
-
 class Robot:
-    def __init__(self, x=0., y=0., yaw=0., sequencer = None):
-        self.pose = pose.Pose(x,y,yaw)
-        # Flags / states
-        self.state = "wander"
-        self.flag_obstacle_front = False
-        self.flag_obstacle_right = False
-        self.flag_imminentobstacle = False
-        self.flag_object = False
+    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer = None):
+        self.grid = grid
+        self.grid_resolution = grid_resolution
+        self.grid_vis=grid_vis
+        self.aoif = aoif
+        self.laser_angles = laser_angles
+        self.laser_range_max = laser_range_max
+        self.pose = Pose(x,y,yaw)
         self.sequencer = sequencer
 
-        self.publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        rospy.Subscriber('scan', LaserScan, self.get_laser_data)
         rospy.Subscriber('odom', Odometry, self.get_odom_data)
+        rospy.Subscriber('scan', LaserScan, self.get_laser_data)
         rospy.Subscriber('camera/rgb/image_raw', Image, self.get_image_data)
-
-        
-    def turn_left(self):
-        self.publisher.publish(twist_msg(0., 0.2))
-    def turn_right(self):
-        self.publisher.publish(twist_msg(0.2, -0.2))
-    def move_forward(self):
-        self.publisher.publish(twist_msg(0.2, 0.))
             
     def get_odom_data(self, msg):
-        """ Converts to euler angles, saves the received odom data as a dictionary and appends to global odom_msgs list. """
-        quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y, msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
+        quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
+                       msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
         (_, _, yaw) = euler_from_quaternion(quarternion)
-        x = msg.pose.pose.position.x
-        y = msg.pose.pose.position.y
+        px = msg.pose.pose.position.x
+        py = msg.pose.pose.position.y
 
-        self.pose = pose.Pose(x, y, yaw)
+        self.pose.update_pose(px, py, yaw)
+        self.grid.update_grid(px, py, flag='CURR')
 
+        # build contours here
+        self.grid_vis.update_plot()
+        self.aoif.get_grid_contours()
 
     def get_laser_data(self, msg):
-   
-        laser_data = msg.ranges[:31] + msg.ranges[-30:]
-        laser_data_right = msg.ranges[31:150]
-        distright = min(laser_data_right)
-        #rospy.loginfo('right_dist: ' + str(distright))
+        laser_distances = [msg.ranges[i] for i in self.laser_angles]
 
-        dist = min(laser_data)
-        #rospy.loginfo('dist: ' + str(dist))
+        for angle, dist in zip(self.laser_angles, laser_distances):
+            if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
+                dist = self.laser_range_max
 
-        if distright <= 1.0:
-            self.flag_obstacle_right = True
-        else:
-            self.flag_obstacle_right = False
-        if 0.25 < dist < 0.5:
-            self.flag_obstacle_front = True    
-        elif dist <= 0.25:
-            self.flag_imminentobstacle = True
-            self.flag_obstacle_front = True 
-        else: 
-            self.flag_obstacle_front = False
-            self.flag_imminentobstacle = False
+            plot_points = self.pose.plot_points_from_laser(angle, dist, self.grid_resolution)  # convert to a list of scanned points
+            for plot_point in plot_points:
+                self.grid.update_grid(plot_point[0], plot_point[1], flag='NO_OBJ')  # update the grid at each point
 
+        # build contours here
+        self.grid_vis.update_plot()
+        self.aoif.get_grid_contours()
 
     def get_image_data(self, msg):
-        # TOD0
-        test = 1
+        # TODO
+        i = 1
