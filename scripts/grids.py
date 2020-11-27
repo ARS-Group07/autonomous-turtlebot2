@@ -2,6 +2,7 @@ import rospy
 import cv2
 import numpy as np
 
+
 class Grid:
     """ Class representing a metric map, denoting obstacles and probabilities of objects of interest in the world. """
 
@@ -57,6 +58,7 @@ class GridVisualiser:
 
     def __init__(self, input_grid):
         self.grid = input_grid
+        self.lut = self.generate_lut()
 
         self.shape_x = input_grid.grid.shape[0]
         self.shape_y = input_grid.grid.shape[1]
@@ -64,19 +66,43 @@ class GridVisualiser:
         print ("Shape X: " + str(self.shape_x))
         print ("Shape Y: " + str(self.shape_x))
 
-        cv2.namedWindow('grid_vis', 2)
+        cv2.namedWindow('Map of explored space', 2)
         self.update_plot()
 
+    @staticmethod
+    def generate_lut():
+        """ Set colour map for colouring in the visualiser. """
+        lut = np.zeros([256, 3], dtype=np.uint8)
+
+        # order is obstacles, explored space, unexplored space, robot
+        # set blues
+        lut[:64, 0] = 135
+        lut[64:92, 0] = 252
+        lut[92:192, 0] = 200
+        lut[192:, 0] = 69
+
+        # set greens
+        lut[:64, 1] = 129
+        lut[64:92, 1] = 253
+        lut[92:192, 1] = 200
+        lut[192:, 1] = 146
+
+        # set reds
+        lut[:64, 2] = 58
+        lut[64:92, 2] = 255
+        lut[92:192, 2] = 200
+        lut[192:, 2] = 255
+
+        return lut
+
     def update_plot(self):
-        image = np.array(self.grid.grid)
-        image = np.where(image==0, 0.15, image)
-        #image = np.where(image==255, 0.25, image)
-        #image = np.where(image==0.5, 0.5, image)
-        #image = np.where(image==2, 0.75, image)
-        #image = np.where(image==-1, 1, image) # Replace all -1 values with 1
-
-        image = cv2.resize(image, (self.shape_x * 4, self.shape_y * 4))  # get larger version for display etc
+        image = ((self.grid.grid + 1.) * 64).astype(np.uint8)  # convert image to 0,255 range
+        image = cv2.resize(image, (self.shape_x * 4, self.shape_y * 4), interpolation=cv2.INTER_NEAREST)  # resize for display
         image = cv2.flip(image, 0)  # flip mask vertically cuz cv2 :)
-        cv2.imshow('grid_vis', image)
-        cv2.waitKey(1)
 
+        colour_image = np.empty([self.shape_x * 4, self.shape_y * 4, 3], dtype=np.uint8)
+        for i in range(3):
+            colour_image[..., i] = cv2.LUT(image, self.lut[:, i])
+
+        cv2.imshow('Map of explored space', colour_image)
+        cv2.waitKey(1)
