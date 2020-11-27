@@ -32,17 +32,12 @@ if __name__ == '__main__':
         # ========== grid and visualiser initialisation ==========
         map_arr = messagehelper.create_map_array(occupancy_map, map_metadata, grid_resolution)
         grid = Grid(map_arr=map_arr)
+        # Instantiate and show the AOI Finder & grid visualiser
         grid_vis = GridVisualiser(grid)
-        # Instantiate and show the AOI Finder
         aoif = AreaOfInterestFinder(grid)
 
         the_robot = Robot(grid=grid, grid_vis=grid_vis, aoif=aoif,
                           laser_density = laser_density, laser_angles = laser_angles,laser_range_max=laser_range_max)
-
-        # Show the grid visualiser
-        #plt.show(block=False)
-        #animate = FuncAnimation(grid_vis.fig, grid_vis.plot_grid, init_func=grid_vis.setup_frame)
-
         the_robot.sequencer = sequencer.Sequencer()
         the_robot.sequencer.sequence(the_robot)
         

@@ -58,8 +58,6 @@ class GridVisualiser:
     def __init__(self, input_grid):
         self.grid = input_grid
 
-        print("Type: " + str(type(input_grid.grid)))
-
         self.shape_x = input_grid.grid.shape[0]
         self.shape_y = input_grid.grid.shape[1]
 
@@ -73,7 +71,7 @@ class GridVisualiser:
         print ("Updating")
         image = np.ones((self.shape_x, self.shape_y, 3), np.uint8)
 
-        first, second, third, fourth = 0, 0, 0 ,0
+        first, second, third, fourth, fifth = 0, 0, 0 ,0, 0
         for ix, iy in np.ndindex(self.grid.grid.shape):
             value = self.grid.grid[ix, iy]
             #print ("Value: " + str(value))
@@ -90,10 +88,21 @@ class GridVisualiser:
             elif (value == 2): # CURR
                 image[ix, iy] = [64, 64, 64]
                 fourth = fourth + 1
+            elif (value == 255): # MAP
+                image[ix, iy] = [0, 0, 0]
+                fifth = fifth + 1
 
         print(str([first, second, third, fourth]))
 
-        image = cv2.resize(image, (self.shape_x * 6, self.shape_y * 6))  # get larger version for display etc
+        #print ("Updating")
+        #image = np.array(self.grid.grid)
+        ##image = np.where(image==0, 0, image)
+        #image = np.where(image==255, 0.25, image)
+        ##image = np.where(image==0.5, 0.5, image)
+        #image = np.where(image==2, 0.75, image)
+        #image = np.where(image==-1, 1, image) # Replace all -1 values with 1
+
+        image = cv2.resize(image, (self.shape_x * 4, self.shape_y * 4))  # get larger version for display etc
         image = cv2.flip(image, 0)  # flip mask vertically cuz cv2 :)
         cv2.imshow('grid_vis', image)
         cv2.waitKey(1)

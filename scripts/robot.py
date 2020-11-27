@@ -35,8 +35,8 @@ class Robot:
         px = msg.pose.pose.position.x
         py = msg.pose.pose.position.y
 
-        self.grid.update_grid(px, py, flag='CURR')
         self.pose.update_pose(px, py, yaw)
+        self.grid.update_grid(px, py, flag='CURR')
 
         # build contours here
         self.grid_vis.update_plot()
@@ -44,6 +44,9 @@ class Robot:
 
     def get_laser_data(self, msg):
         laser_distances = [msg.ranges[i] for i in self.laser_angles]
+
+        for dist in laser_distances:
+            print ("Dist: " + str(dist))
 
         for angle, dist in zip(self.laser_angles, laser_distances):
             if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
