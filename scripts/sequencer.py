@@ -2,32 +2,50 @@
 import robot
 import rospy
 import thread
-
+import behaviour
+import exploration
 
 class Sequencer:
-    def __init__(self, robot):
+    def __init__(self):
         self.robot = robot
-        self.robot.state = "wander"
 
-    def sequence(self):
+        # lower key value -> higher priority
+        self.hierarchy = {1: exploration.Exploration()}
+
+        self.current_behaviour_idx = 1
+        self.current_behaviour = self.hierarchy.get(self.current_behaviour_idx)
+
+
+    def sequence(self, robot):
+        rate = rospy.Rate(25)
+
         while not rospy.is_shutdown():
-
-            rate = rospy.Rate(25)
-            rospy.loginfo('state: ' + self.robot.state)
-            if(self.robot.flag_obstacle_front is False and self.robot.flag_obstacle_right is False):
-                if(self.robot.state is "follow_wall"):
-                    self.robot.state = "turn_right"
-                if(self.robot.state is "turn_right"):
-                    self.robot.turn_right()
-                else:
-                   # self.robot.state = "wander"   
-                    self.robot.move_forward()
-                    self.robot.state = "wander"
-            elif(self.robot.flag_obstacle_front is True):
-                
-                self.robot.turn_left()
-            else:
-                self.robot.state = "follow_wall"
-                self.robot.move_forward()
-
+            #rospy.loginfo("Behaviour: " + self.current_behaviour.name)
+            self.current_behaviour.act(robot, self)
             rate.sleep()
+
+    def at_top_hierarchy(self):
+        return self.current_behaviour_idx == 1
+
+    def at_bottom_hierarchy(self):
+        return self.current_behaviour_idx == len(self.hierarchy) - 1
+
+    def ascend_behaviour(self):
+        next_idx = self.current_behaviour_idx - 1
+
+        if (next_idx < 1):
+            rospy.loginfo("Tried to ascend hierarchy but already at the top")
+        else:
+            self.current_behaviour_idx = next_idx
+            self.current_behaviour = self.hierarchy.get(self.current_behaviour_idx)
+            rospy.loginfo("Ascended behaviour. New: " + self.current_behaviour.name)
+
+    def descend_behaviour(self):
+        next_idx = self.current_behaviour_idx + 1
+
+        if (next_idx >= len(self.hierarchy) - 1):
+            rospy.loginfo("Tried to descend hierarchy but already at the bottom")
+        else:
+            self.current_behaviour_idx = next_idx
+            self.current_behaviour = self.hierarchy.get(self.current_behaviour_idx)
+            rospy.loginfo("Descended behaviour. New: " + self.current_behaviour.name)

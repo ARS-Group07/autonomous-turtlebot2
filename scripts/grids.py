@@ -1,7 +1,6 @@
-import matplotlib.colors
 import rospy
-from matplotlib import pyplot as plt
-
+import cv2
+import numpy as np
 
 class Grid:
     """ Class representing a metric map, denoting obstacles and probabilities of objects of interest in the world. """
@@ -58,18 +57,26 @@ class GridVisualiser:
 
     def __init__(self, input_grid):
         self.grid = input_grid
-        self.fig, self.ax = plt.subplots()
-        self.fig.set_size_inches(6, 6)
-        self.cmap = matplotlib.colors.LinearSegmentedColormap.from_list("",
-                    ["darkslategrey", "darkslategrey", "white", "silver", "tan", "plum", "coral", "lime", "red"])
 
-        plt.xlabel('gx')
-        plt.ylabel('gy')
-        plt.title('Exploration metric map (absolute)')
+        self.shape_x = input_grid.grid.shape[0]
+        self.shape_y = input_grid.grid.shape[1]
 
-    def setup_frame(self):
-        self.ax.set_xlim(0, self.grid.eff_size)
-        self.ax.set_ylim(0, self.grid.eff_size)
+        print ("Shape X: " + str(self.shape_x))
+        print ("Shape Y: " + str(self.shape_x))
 
-    def plot_grid(self, frame):
-        self.ax.pcolormesh(self.grid.grid, cmap=self.cmap, vmin=-1., vmax=3.)
+        cv2.namedWindow('grid_vis', 2)
+        self.update_plot()
+
+    def update_plot(self):
+        image = np.array(self.grid.grid)
+        image = np.where(image==0, 0.15, image)
+        #image = np.where(image==255, 0.25, image)
+        #image = np.where(image==0.5, 0.5, image)
+        #image = np.where(image==2, 0.75, image)
+        #image = np.where(image==-1, 1, image) # Replace all -1 values with 1
+
+        image = cv2.resize(image, (self.shape_x * 4, self.shape_y * 4))  # get larger version for display etc
+        image = cv2.flip(image, 0)  # flip mask vertically cuz cv2 :)
+        cv2.imshow('grid_vis', image)
+        cv2.waitKey(1)
+
