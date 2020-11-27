@@ -15,7 +15,6 @@ class Sequencer:
         self.current_behaviour_idx = 1
         self.current_behaviour = self.hierarchy.get(self.current_behaviour_idx)
 
-
     def sequence(self, robot):
         rate = rospy.Rate(25)
 
@@ -24,7 +23,7 @@ class Sequencer:
             self.current_behaviour.act(robot, self)
             rate.sleep()
 
-    def at_top_hierarchy(self):
+    def at_top_hierarcgrid_resolutionhy(self):
         return self.current_behaviour_idx == 1
 
     def at_bottom_hierarchy(self):

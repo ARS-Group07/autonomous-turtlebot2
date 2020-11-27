@@ -11,6 +11,8 @@ from grids import Grid, GridVisualiser
 from nav_msgs.msg import Odometry, OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
 from matplotlib.animation import FuncAnimation
+import actionlib
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 if __name__ == '__main__':
     try:
@@ -21,6 +23,12 @@ if __name__ == '__main__':
         map_metadata = rospy.wait_for_message('/map_metadata', MapMetaData, timeout=5)
         camera_metadata = rospy.wait_for_message('camera/rgb/camera_info', CameraInfo, timeout=5)
         laser_range_max = rospy.wait_for_message('scan', LaserScan, timeout=5).range_max
+
+        # Nav Stack
+        nav_client = actionlib.SimpleActionClient('move_base', MoveBaseAction)
+        rospy.loginfo("Waiting for nav client...")
+        nav_client.wait_for_server()
+        rospy.loginfo("Waited for nav client...")
 
         # ========== SETTINGS ==========
         grid_resolution = 0.2
@@ -34,10 +42,11 @@ if __name__ == '__main__':
         grid = Grid(map_arr=map_arr)
         # Instantiate and show the AOI Finder & grid visualiser
         grid_vis = GridVisualiser(grid)
-        aoif = AreaOfInterestFinder(grid)
+        aoif = AreaOfInterestFinder(grid, scale=4)
 
         the_robot = Robot(grid=grid, grid_resolution = grid_resolution, grid_vis=grid_vis,
-                          aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max)
+                          aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max,
+                          nav_client=nav_client)
         the_robot.sequencer = sequencer.Sequencer()
         the_robot.sequencer.sequence(the_robot)
         
