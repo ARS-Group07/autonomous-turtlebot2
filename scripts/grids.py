@@ -68,37 +68,10 @@ class GridVisualiser:
         self.update_plot()
 
     def update_plot(self):
-        print ("Updating")
-        image = np.ones((self.shape_x, self.shape_y, 3), np.uint8)
-
-        first, second, third, fourth, fifth = 0, 0, 0 ,0, 0
-        for ix, iy in np.ndindex(self.grid.grid.shape):
-            value = self.grid.grid[ix, iy]
-            #print ("Value: " + str(value))
-            # Note: Image stored in BGR
-            if (value == -1.0): # INACCESSIBLE
-                image[ix, iy] = [255, 255, 255]
-                first = first + 1
-            elif (value == 0): # NO_OBJ
-                image[ix, iy] = [192, 192, 192]
-                second = second + 1
-            elif (value == 0.5): # UNKNOWN
-                image[ix, iy] = [128, 128, 128]
-                third = third + 1
-            elif (value == 2): # CURR
-                image[ix, iy] = [64, 64, 64]
-                fourth = fourth + 1
-            elif (value == 255): # MAP
-                image[ix, iy] = [0, 0, 0]
-                fifth = fifth + 1
-
-        print(str([first, second, third, fourth]))
-
-        #print ("Updating")
-        #image = np.array(self.grid.grid)
-        ##image = np.where(image==0, 0, image)
+        image = np.array(self.grid.grid)
+        image = np.where(image==0, 0.15, image)
         #image = np.where(image==255, 0.25, image)
-        ##image = np.where(image==0.5, 0.5, image)
+        #image = np.where(image==0.5, 0.5, image)
         #image = np.where(image==2, 0.75, image)
         #image = np.where(image==-1, 1, image) # Replace all -1 values with 1
 

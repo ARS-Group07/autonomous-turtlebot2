@@ -14,11 +14,11 @@ from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
 
 class Robot:
-    def __init__(self, grid, grid_vis, aoif, laser_density, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer = None):
+    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer = None):
         self.grid = grid
+        self.grid_resolution = grid_resolution
         self.grid_vis=grid_vis
         self.aoif = aoif
-        self.laser_density = laser_density
         self.laser_angles = laser_angles
         self.laser_range_max = laser_range_max
         self.pose = Pose(x,y,yaw)
@@ -45,14 +45,11 @@ class Robot:
     def get_laser_data(self, msg):
         laser_distances = [msg.ranges[i] for i in self.laser_angles]
 
-        for dist in laser_distances:
-            print ("Dist: " + str(dist))
-
         for angle, dist in zip(self.laser_angles, laser_distances):
             if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
                 dist = self.laser_range_max
 
-            plot_points = self.pose.plot_points_from_laser(angle, dist, self.laser_density)  # convert to a list of scanned points
+            plot_points = self.pose.plot_points_from_laser(angle, dist, self.grid_resolution)  # convert to a list of scanned points
             for plot_point in plot_points:
                 self.grid.update_grid(plot_point[0], plot_point[1], flag='NO_OBJ')  # update the grid at each point
 

@@ -36,8 +36,8 @@ if __name__ == '__main__':
         grid_vis = GridVisualiser(grid)
         aoif = AreaOfInterestFinder(grid)
 
-        the_robot = Robot(grid=grid, grid_vis=grid_vis, aoif=aoif,
-                          laser_density = laser_density, laser_angles = laser_angles,laser_range_max=laser_range_max)
+        the_robot = Robot(grid=grid, grid_resolution = grid_resolution, grid_vis=grid_vis,
+                          aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max)
         the_robot.sequencer = sequencer.Sequencer()
         the_robot.sequencer.sequence(the_robot)
         
