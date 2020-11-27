@@ -12,15 +12,18 @@ from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan, Image
 from std_msgs.msg import String
 from tf.transformations import euler_from_quaternion
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 
 class Robot:
-    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, x=0., y=0., yaw=0., sequencer = None):
+    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, nav_client,
+                 x=0., y=0., yaw=0., sequencer = None):
         self.grid = grid
         self.grid_resolution = grid_resolution
         self.grid_vis=grid_vis
         self.aoif = aoif
         self.laser_angles = laser_angles
         self.laser_range_max = laser_range_max
+        self.nav_client = nav_client
         self.pose = Pose(x,y,yaw)
         self.sequencer = sequencer
 
@@ -60,3 +63,20 @@ class Robot:
     def get_image_data(self, msg):
         # TODO
         i = 1
+
+    def send_nav_goal(self, px, py):
+        self.cancel_nav_goals()
+
+        goal = MoveBaseGoal()
+        goal.target_pose.header.frame_id = "map"
+        goal.target_pose.header.stamp = rospy.Time.now()
+        goal.target_pose.pose.position.x = px
+        goal.target_pose.pose.position.y = py
+        goal.target_pose.pose.orientation.w = 1.0
+        self.nav_client.send_goal(goal)
+        rospy.loginfo("Sent goal (" + str(goal.target_pose.pose.position.x) + ", " + str(
+            goal.target_pose.pose.position.y) + "). Now waiting")
+        wait = self.nav_client.wait_for_result()
+
+    def cancel_nav_goals(self):
+        self.nav_client.cancel_all_goals()

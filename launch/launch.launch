@@ -1,0 +1,4 @@
+<launch>
+  <node name="move_base" pkg="move_base" type="move_base" output="screen"/>
+  <node name="assignment" pkg="ars" type="assignment.py" output="screen"/>
+</launch>
