@@ -2,6 +2,7 @@ from behaviour import *
 from sequencer import *
 from robot import *
 
+
 class Exploration(Behaviour):
     def __init__(self):
         Behaviour.__init__(self, "Exploration")
