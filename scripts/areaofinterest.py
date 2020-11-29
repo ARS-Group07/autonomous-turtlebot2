@@ -1,5 +1,6 @@
 import cv2
 
+
 class AreaOfInterestFinder:
     def __init__(self, grid, scale):
         self.grid = grid

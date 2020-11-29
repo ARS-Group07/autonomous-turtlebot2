@@ -3,6 +3,7 @@ from sequencer import *
 from robot import *
 from areaofinterest import AreaOfInterestFinder
 
+
 class Exploration(Behaviour):
     def __init__(self):
         Behaviour.__init__(self, "Exploration")
