@@ -88,7 +88,7 @@ class Wanderer:
         # turn towards the randomly chosen yaw, stop once reached it, and start moving forwards
         elif self.state == 'TURN':
             if self.pose.ang_dist(self.desired_pose) > 0.1:
-                self.pub.publish(self.twist_msg(0., -0.3))
+                self.pub.publish(self.twist_msg(0., 0.3))
             else:
                 self.state = 'MOVE'
 
