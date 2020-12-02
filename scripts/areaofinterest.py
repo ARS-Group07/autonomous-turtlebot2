@@ -1,11 +1,12 @@
 import cv2
+import numpy as np
 
 
 class AreaOfInterestFinder:
     def __init__(self, grid, scale):
         self.grid = grid
         self.scale = scale
-        cv2.namedWindow('unexplored_contours', 1)
+        cv2.namedWindow('Unexplored areas with centroids', 1)
 
         self.largest_area, self.largest_cx, self.largest_cy = -1, 200, 200
 
@@ -14,6 +15,8 @@ class AreaOfInterestFinder:
         (h, w) = self.grid.grid.shape
         image = cv2.resize(image, (w * self.scale, h * self.scale))  # get larger version for display etc
         image = cv2.flip(image, 0)  # flip mask vertically cuz cv2 :)
+        display_image = np.zeros([image.shape[0], image.shape[1], 3], dtype=np.uint8)
+        display_image[..., 2] += 240
         unexplored_mask = cv2.inRange(image, 0.499, 0.501)
 
         # find all discrete unexplored areas
@@ -35,14 +38,21 @@ class AreaOfInterestFinder:
             cx = int(m['m10'] / m['m00'])
             cy = int(m['m01'] / m['m00'])
 
-            if (self.largest_area < area):
+            if self.largest_area < area:
                 self.largest_area = area
                 self.largest_cx = cx
                 self.largest_cy = cy
 
             # draw a circle on each discrete object; size of circle corresponds to area of contour
-            cv2.circle(unexplored_mask, (cx, cy), int((area ** 0.33) / 2), 127, -1)
+            # bigger contours are more saturated
+            sat = np.clip(int(6 * area ** 0.33), 50, 140)
+            color = (88, sat, 180)
+            cv2.fillPoly(display_image, [c], color)
+            cv2.circle(display_image, (cx, cy), int((area ** 0.33) / 2), (18, 100, 220), -1)
 
-
-        cv2.imshow('unexplored_contours', unexplored_mask)
+        # the chosen area's circle will be brighter
+        cv2.circle(display_image, (self.largest_cx, self.largest_cy), int((self.largest_area ** 0.33) / 2),
+                   (18, 220, 220), -1)
+        display_image = cv2.cvtColor(display_image, cv2.COLOR_HSV2BGR)
+        cv2.imshow('Unexplored areas with centroids', display_image)
         cv2.waitKey(1)
