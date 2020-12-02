@@ -3,9 +3,11 @@
 import messagehelper
 import rospy
 import sequencer
+import actionlib
+
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from robot import Robot
 from localise import Localiser, Wanderer
-
 from areaofinterest import AreaOfInterestFinder
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from grids import Grid, GridVisualiser
