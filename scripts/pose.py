@@ -1,4 +1,6 @@
 import math
+import numpy as np
+import random
 
 
 class Pose:
@@ -15,7 +17,7 @@ class Pose:
 
     def plot_points_from_laser(self, angle, distance, density):
         """ Takes in a distance and angle from the laser, and returns a list of points to update on the graph. """
-        threshold = 0.5  # to avoid updating on the other side of a wall etc.
+        threshold = 1.  # to avoid updating on the other side of a wall etc.
         rad_angle = angle * math.pi / 180.
         num_points = int((distance / density) + 1)
 
@@ -28,3 +30,27 @@ class Pose:
             plot_points.append([pxx, pyy])
 
         return plot_points
+
+    def ang_dist(self, other_pose):
+        # get angle vectors
+        other_front = (math.cos(other_pose.yaw), math.sin(other_pose.yaw))
+        front = (math.cos(self.yaw), math.sin(self.yaw))
+
+        # assign as unit vectors
+        other_front = other_front / np.linalg.norm(other_front)
+        front = front / np.linalg.norm(front)
+
+        # return angle difference
+        return np.arccos(np.dot(front, other_front))
+
+    def get_random_yaw(self):
+        # get random yaw to turn towards
+        ang_dist = 0.
+        yaw = 0.
+
+        # choose an angle at least 45 degrees from current position
+        while ang_dist < math.pi / 4:
+            yaw = math.radians(random.randrange(-180, 180))
+            ang_dist = self.ang_dist(Pose(0., 0., yaw))
+
+        return yaw
