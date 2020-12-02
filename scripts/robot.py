@@ -2,7 +2,7 @@ from pose import Pose
 import math
 import rospy
 
-from nav_msgs.msg import Odometry
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import LaserScan, Image
 from tf.transformations import euler_from_quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
@@ -21,11 +21,13 @@ class Robot:
         self.pose = Pose(x,y,yaw)
         self.sequencer = sequencer
 
-        rospy.Subscriber('odom', Odometry, self.get_odom_data)
+        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
         rospy.Subscriber('camera/rgb/image_raw', Image, self.get_image_data)
-            
-    def get_odom_data(self, msg):
+
+    # odom is gone
+    def get_amcl_data(self, msg):
+        """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
         quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
                        msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
         (_, _, yaw) = euler_from_quaternion(quarternion)
