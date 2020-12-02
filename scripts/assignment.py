@@ -14,6 +14,27 @@ from grids import Grid, GridVisualiser
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
 
+def localise(laser_angles):
+    # SRY 4 THE MESS BEN :'(
+    #
+    #
+    # Localise self before continuing to remainder of program
+    first_amcl_msg = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
+    rospy.loginfo('Got AMCL message, starting robot localisation ... ')
+
+    localiser = Localiser()
+    wanderer = Wanderer(laser_angles)
+
+    r = rospy.Rate(15)
+    while not localiser.localised:
+        wanderer.move()
+        r.sleep()
+    rospy.loginfo('ROBOT LOCALISED')
+
+    # robot now localised so kill those subscribers - no longer needed
+    localiser.unsubscribe()
+    wanderer.unsubscribe()
+    rospy.loginfo('Killed localisation and wandering behaviours - initialising full robot functionality ... ')
 
 if __name__ == '__main__':
     try:
@@ -38,31 +59,9 @@ if __name__ == '__main__':
         rospy.loginfo('fov: ' + str(fov))
         laser_angles = list(range(-int(fov / 2.), 0, laser_density)) + list(range(0, int(fov / 2.), laser_density))
 
-        # SRY 4 THE MESS BEN :'(
-        #
-        #
-        # Localise self before continuing to remainder of program
-        first_amcl_msg = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
-        rospy.loginfo('Got AMCL message, starting robot localisation ... ')
-
-        localiser = Localiser()
-        wanderer = Wanderer(laser_angles)
-
-        r = rospy.Rate(15)
-        while not localiser.localised:
-            wanderer.move()
-            r.sleep()
-        rospy.loginfo('ROBOT LOCALISED')
-
-        # robot now localised so kill those subscribers - no longer needed
-        localiser.unsubscribe()
-        wanderer.unsubscribe()
-        rospy.loginfo('Killed localisation and wandering behaviours - initialising full robot functionality ... ')
-
+        # Localise ourself using Monte Carlo
+        localise(laser_angles)
         # once localised, continue to the remainder of the code ...
-        #
-        #
-        #
 
         # ========== grid and visualiser initialisation ==========
         map_arr = messagehelper.create_map_array(occupancy_map, map_metadata, grid_resolution)

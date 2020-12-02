@@ -6,6 +6,7 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import LaserScan, Image
 from tf.transformations import euler_from_quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from objectsinfront import LineOfSight, VisibleObject, LineOfSightGenerator
 
 
 class Robot:
@@ -20,6 +21,12 @@ class Robot:
         self.nav_client = nav_client
         self.pose = Pose(x,y,yaw)
         self.sequencer = sequencer
+
+        # Line of Sight
+        self.last_laser_msg = None
+        self.last_image_msg = None
+        self.los_generator = LineOfSightGenerator(self)
+        self.current_los = self.los_generator.create_and_populate(None, None)
 
         rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
@@ -39,8 +46,9 @@ class Robot:
         self.grid_vis.update_plot()
 
     def get_laser_data(self, msg):
-        laser_distances = [msg.ranges[i] for i in self.laser_angles]
+        self.last_laser_msg = msg
 
+        laser_distances = [msg.ranges[i] for i in self.laser_angles]
         for angle, dist in zip(self.laser_angles, laser_distances):
             if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
                 dist = self.laser_range_max
@@ -53,8 +61,10 @@ class Robot:
         self.aoif.get_grid_contours()
 
     def get_image_data(self, msg):
-        # TODO
-        i = 1
+        self.last_image_msg = msg
+
+        # Find the objects within the Line of Sight here (can do this here and/or in the laser callback, but performance)
+        self.current_los = self.los_generator.create_and_populate(self.last_image_msg, self.last_image_msg)
 
     def send_nav_goal(self, px, py):
         self.cancel_nav_goals()

@@ -39,7 +39,6 @@ class AreaOfInterestFinder:
                 self.largest_area = area
                 self.largest_cx = cx
                 self.largest_cy = cy
-                print("New best contour: " + str(self.largest_cx) + ", " + str(self.largest_cy))
 
             # draw a circle on each discrete object; size of circle corresponds to area of contour
             cv2.circle(unexplored_mask, (cx, cy), int((area ** 0.33) / 2), 127, -1)
