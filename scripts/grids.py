@@ -4,7 +4,8 @@ import numpy as np
 
 
 class Grid:
-    """ Class representing a metric map, denoting obstacles and probabilities of objects of interest in the world. """
+
+    ## TODO - MAP STUFF HERE - DECIDE WHETHER THIS HAS ALREADY BEEN DETECTED (ALTHOUGH, THIS IS RESOLUTUION DEPENDENT)
 
     def __init__(self, size=19.2, resolution=0.2, map_arr=None):
         self.origin_x = -10.  # from map .yaml file

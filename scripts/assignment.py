@@ -59,8 +59,10 @@ if __name__ == '__main__':
         rospy.loginfo('fov: ' + str(fov))
         laser_angles = list(range(-int(fov / 2.), 0, laser_density)) + list(range(0, int(fov / 2.), laser_density))
 
-        # Localise ourself using Monte Carlo
-        localise(laser_angles)
+        # Localise ourself using Monte Carlo if we're not skipping (takes a lot of time to initialise)
+        skip_localisation = False
+        if (not skip_localisation):
+            localise(laser_angles)
         # once localised, continue to the remainder of the code ...
 
         # ========== grid and visualiser initialisation ==========
@@ -73,8 +75,8 @@ if __name__ == '__main__':
 
         the_robot = Robot(grid=grid, grid_resolution = grid_resolution, grid_vis=grid_vis,
                           aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max,
-                          nav_client=nav_client)
-        the_robot.sequencer = sequencer.Sequencer()
+                          nav_client=nav_client, use_amcl_localisation=(not skip_localisation))
+        the_robot.sequencer = sequencer.Sequencer(the_robot)
         the_robot.sequencer.sequence(the_robot)
         
     except rospy.ROSInterruptException:

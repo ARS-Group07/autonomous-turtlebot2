@@ -21,8 +21,7 @@ ALBERT
 BEN
 > if an object of interest is detected by camera module, stop exploration behaviour, move towards object
 > once within 1 meter of object, that object is FOUND and no longer used in deciding exploration behaviour
-> use avoidance behaviour to prevent hitting walls etc 
-
+> use avoidance behaviour to prevent hitting walls etc
 
 BEN 
 Behaviour management 

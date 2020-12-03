@@ -1,5 +1,5 @@
 import cv2
-
+import math
 
 class AreaOfInterestFinder:
     def __init__(self, grid, scale):
@@ -7,9 +7,9 @@ class AreaOfInterestFinder:
         self.scale = scale
         cv2.namedWindow('unexplored_contours', 1)
 
-        self.largest_area, self.largest_cx, self.largest_cy = -1, 200, 200
+        self.closest_dist, self.closest_area, self.closest_cx, self.closest_cy = 0, -1, 200, 200
 
-    def get_grid_contours(self):
+    def get_grid_contours(self, robot_x, robot_y):
         image = self.grid.grid
         (h, w) = self.grid.grid.shape
         image = cv2.resize(image, (w * self.scale, h * self.scale))  # get larger version for display etc
@@ -19,7 +19,7 @@ class AreaOfInterestFinder:
         # find all discrete unexplored areas
         _, contours, hierarchy = cv2.findContours(unexplored_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        self.largest_area = 0
+        self.closest_dist = 10000000
         for i, c in enumerate(contours):
             # don't include sub-contours ie. the holes in the white areas
             if hierarchy[0][i][3] != -1:
@@ -29,20 +29,23 @@ class AreaOfInterestFinder:
             area = m['m00']
 
             # don't include very small areas as areas of interest
-            if area < 25.:
-                continue
-
+            #if area < 25.:
+            #    continue
             cx = int(m['m10'] / m['m00'])
             cy = int(m['m01'] / m['m00'])
 
-            if (self.largest_area < area):
-                self.largest_area = area
-                self.largest_cx = cx
-                self.largest_cy = cy
+            dist = math.sqrt( (cx - robot_x) ** 2 + (cy - robot_y) ** 2)
+            if (dist < self.closest_dist):
+                self.closest_area = area
+                self.closest_dist = dist
+                self.closest_cx = cx
+                self.closest_cy = cy
 
             # draw a circle on each discrete object; size of circle corresponds to area of contour
             cv2.circle(unexplored_mask, (cx, cy), int((area ** 0.33) / 2), 127, -1)
 
+        # Re-paint over the closest contour with another color
+        cv2.circle(unexplored_mask, (self.closest_cx, self.closest_cy), int((self.closest_area ** 0.33) / 2), 255, -1)
 
         cv2.imshow('unexplored_contours', unexplored_mask)
         cv2.waitKey(1)

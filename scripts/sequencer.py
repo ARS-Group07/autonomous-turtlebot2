@@ -1,19 +1,15 @@
-#
-import robot
 import rospy
 import thread
-import behaviour
-import exploration
+
+from robot import Robot
+from behaviours import *
 
 
 class Sequencer:
-    def __init__(self):
+    def __init__(self, robot):
         self.robot = robot
 
-        # lower key value -> higher priority
-        self.hierarchy = {1: exploration.Exploration()}
-        self.current_behaviour_idx = 1
-        self.current_behaviour = self.hierarchy.get(self.current_behaviour_idx)
+        self.current_behaviour = Exploration()
 
     def sequence(self, robot):
         rate = rospy.Rate(25)
@@ -23,28 +19,23 @@ class Sequencer:
             self.current_behaviour.act(robot, self)
             rate.sleep()
 
-    def at_top_hierarcgrid_resolutionhy(self):
-        return self.current_behaviour_idx == 1
+    # Call of this function may come from various threads (i.e. topics from other nodes)
+    def begin_homing(self, object_id, homing_ang_vel):
+        self.robot.cancel_nav_goals()
 
-    def at_bottom_hierarchy(self):
-        return self.current_behaviour_idx == len(self.hierarchy) - 1
+        if (self.robot.is_object_found(object_id)):
+            return
 
-    def ascend_behaviour(self):
-        next_idx = self.current_behaviour_idx - 1
+        if isinstance(self.current_behaviour, Exploration):
+            self.current_behaviour = Homing(self, self.robot.laser_angles)
+            self.current_behaviour.current_object_type = object_id
+            self.current_behaviour.ang_vel = homing_ang_vel
+        elif isinstance(self.current_behaviour, Homing):
+            # Only update the angular velocity if this function call is for the same object type we've been homing towards
+            if self.current_behaviour.current_object_type == object_id:
+                # TODO SOME SORT OF PRIORITY SYSTEM USING THE OBJECT ID IN CASE BOTH ARE IN THE SAME IMAGE FRAME
+                self.current_behaviour.current_object_type = object_id
+                self.current_behaviour.ang_vel = homing_ang_vel
 
-        if next_idx < 1:
-            rospy.loginfo("Tried to ascend hierarchy but already at the top")
-        else:
-            self.current_behaviour_idx = next_idx
-            self.current_behaviour = self.hierarchy.get(self.current_behaviour_idx)
-            rospy.loginfo("Ascended behaviour. New: " + self.current_behaviour.name)
-
-    def descend_behaviour(self):
-        next_idx = self.current_behaviour_idx + 1
-
-        if next_idx >= len(self.hierarchy) - 1:
-            rospy.loginfo("Tried to descend hierarchy but already at the bottom")
-        else:
-            self.current_behaviour_idx = next_idx
-            self.current_behaviour = self.hierarchy.get(self.current_behaviour_idx)
-            rospy.loginfo("Descended behaviour. New: " + self.current_behaviour.name)
+    def finished_homing(self):
+        self.current_behaviour = Exploration()
