@@ -10,6 +10,7 @@ from robot import Robot
 from localise import Localiser, Wanderer
 from areaofinterest import AreaOfInterestFinder
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from sequencer import Sequencer
 from grids import Grid, GridVisualiser
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
@@ -78,6 +79,7 @@ if __name__ == '__main__':
         the_robot = Robot(grid=grid, grid_resolution = grid_resolution, grid_vis=grid_vis,
                           aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max,
                           nav_client=nav_client, use_amcl_localisation=(not skip_localisation))
+        the_robot.sequencer = Sequencer(the_robot)
         the_robot.sequencer.sequence(the_robot)
         
     except rospy.ROSInterruptException:
