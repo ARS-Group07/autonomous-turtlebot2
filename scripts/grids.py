@@ -51,7 +51,7 @@ class Grid:
         """ Given a grid point (gx, gy), return the odometry point (px, py). """
         px = gx * self.resolution + self.origin_x
         py = gy * self.resolution + self.origin_y
-        return int(px), int(py)
+        return px, py
 
 
 class GridVisualiser:

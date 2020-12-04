@@ -14,10 +14,10 @@ from sequencer import Sequencer
 from grids import Grid, GridVisualiser
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
+from status import StatusWindow
 
 
 def localise(laser_angles):
-    # SRY 4 THE MESS BEN :'(
     #
     #
     # Localise self before continuing to remainder of program
@@ -72,14 +72,19 @@ if __name__ == '__main__':
         map_arr = messagehelper.create_map_array(occupancy_map, map_metadata, grid_resolution)
         grid = Grid(map_arr=map_arr)
 
-        # Instantiate and show the AOI Finder & grid visualiser
+        # Instantiate and show the AOI Finder, grid visualiser
         grid_vis = GridVisualiser(grid)
         aoif = AreaOfInterestFinder(grid, scale=4)
 
+        # Instantiate the robot
         the_robot = Robot(grid=grid, grid_resolution = grid_resolution, grid_vis=grid_vis,
                           aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max,
                           nav_client=nav_client, use_amcl_localisation=(not skip_localisation))
-        the_robot.sequencer = Sequencer(the_robot)
+        # Instantiate the status window
+        status_window = StatusWindow(the_robot)
+        the_robot.sequencer = Sequencer(the_robot, status_window)
+
+        # Begin the infinite sequencing loop
         the_robot.sequencer.sequence(the_robot)
         
     except rospy.ROSInterruptException:

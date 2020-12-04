@@ -2,7 +2,6 @@ import math
 import numpy as np
 import random
 
-
 class Pose:
     """ Class representing pose information. Functions for calculating linear, angular distance between poses. """
     def __init__(self, x=0., y=0., yaw=0.):
@@ -42,6 +41,9 @@ class Pose:
 
         # return angle difference
         return np.arccos(np.dot(front, other_front))
+
+    def dist(self, other_pose):
+        return math.sqrt((self.px - other_pose.px) ** 2 + (self.py - other_pose.py) ** 2)
 
     def get_random_yaw(self):
         # get random yaw to turn towards
