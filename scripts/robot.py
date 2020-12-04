@@ -115,7 +115,7 @@ class Robot:
         self.nav_client.send_goal(goal)
         rospy.loginfo("Sent goal (" + str(goal.target_pose.pose.position.x) + ", " + str(
             goal.target_pose.pose.position.y) + "). Now waiting")
-        wait = self.nav_client.wait_for_result()
+        wait = self.nav_client.wait_for_result(rospy.Duration(1))
 
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()

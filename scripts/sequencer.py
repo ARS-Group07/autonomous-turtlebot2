@@ -8,13 +8,15 @@ from behaviours import *
 class Sequencer:
     def __init__(self, robot):
         self.robot = robot
+        self.i = 0
 
         self.current_behaviour = Exploration()
 
     def sequence(self, robot):
-        rate = rospy.Rate(25)
+        rate = rospy.Rate(5)
 
         while not rospy.is_shutdown():
+            self.i += 1
             # rospy.loginfo("Behaviour: " + self.current_behaviour.name)
             self.current_behaviour.act(robot, self)
             rate.sleep()
