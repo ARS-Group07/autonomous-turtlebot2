@@ -6,7 +6,7 @@ from behaviours import *
 from status import StatusWindow
 
 class Sequencer:
-    def __init__(self, robot, status_window):
+    def __init__(self, robot):
         self.robot = robot
         self.cycles = 0
         self.status_window = StatusWindow(robot)
