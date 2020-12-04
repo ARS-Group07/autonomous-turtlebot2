@@ -9,8 +9,6 @@ class StatusWindow:
         cv2.namedWindow('Status', 1)
 
     def update(self, cycle_count):
-        i = 1
-
         image = np.ones([400, 600, 3]) * 255
         sequencer = self.robot.sequencer
         cycles = ['Cycles: ' + str(cycle_count)]

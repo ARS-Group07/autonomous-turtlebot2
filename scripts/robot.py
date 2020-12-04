@@ -14,9 +14,10 @@ import numpy as np
 from sensor_msgs.msg import Image
 from std_msgs.msg import String
 
+
 class Robot:
-    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, nav_client,
-                 x=0., y=0., yaw=0., sequencer = None, use_amcl_localisation=True):
+    def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, nav_client, map_arr,
+                 x=0., y=0., yaw=0., sequencer=None, use_amcl_localisation=True):
         self.grid = grid
         self.grid_resolution = grid_resolution
         self.grid_vis = grid_vis
@@ -26,6 +27,7 @@ class Robot:
         self.nav_client = nav_client
         self.pose = Pose(x, y, yaw)
         self.sequencer = sequencer
+        self.map_arr = map_arr
         self.idle_tracker = IdleTracker(self, 0.0001, 30)
 
         # ========== HOMING & OBJECT DETECTION ==========
@@ -39,14 +41,14 @@ class Robot:
         self.last_laser_msg = None
         self.homing_vel = 0
 
-        if (use_amcl_localisation):
+        if use_amcl_localisation:
             rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
         else:
             rospy.Subscriber('odom', Odometry, self.get_odom_data)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
 
         # Create the fake object detection
-        self.fake_object_detection = FakeObjectDetection(self)
+        # self.fake_object_detection = FakeObjectDetection(self)
 
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
@@ -59,6 +61,9 @@ class Robot:
         self.pose.update_pose(px, py, yaw)
         self.grid.update_grid(px, py, flag='CURR')
         self.grid_vis.update_plot()
+        if self.grid.is_fully_explored():
+            rospy.loginfo('Map fully explored, resetting ...')
+            self.grid.reset_grid(self.map_arr)
 
     def get_odom_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
@@ -80,11 +85,12 @@ class Robot:
             if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
                 dist = self.laser_range_max
 
-            plot_points = self.pose.plot_points_from_laser(angle, dist, self.grid_resolution)  # convert to a list of scanned points
+            plot_points = self.pose.plot_points_from_laser(angle, dist,
+                                                           self.grid_resolution)  # convert to a list of scanned points
             for plot_point in plot_points:
                 self.grid.update_grid(plot_point[0], plot_point[1], flag='NO_OBJ')  # update the grid at each point
 
-        # build contours here
+        # build contours here, update best contour cx, cy
         self.aoif.get_grid_contours(self.pose.px, self.pose.py)
 
         # Update the current position for the robot within the idle tracker since AMCL only sends messages
@@ -116,7 +122,6 @@ class Robot:
         rospy.loginfo("Sent goal (" + str(goal.target_pose.pose.position.x) + ", " + str(
             goal.target_pose.pose.position.y) + "). Now waiting")
         wait = self.nav_client.wait_for_result(rospy.Duration(1))
-        #wait = self.nav_client.wait_for_result()
 
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()
@@ -135,7 +140,7 @@ class IdleTracker():
         if (len(self.poses) == self.poses_stored):
             self.poses.pop(0)
 
-        self.poses.append(pose)
+        self.poses.append(Pose(pose.px, pose.py, pose.yaw))
         self.update_idle()
 
     def update_idle(self):
@@ -155,11 +160,11 @@ class IdleTracker():
         self.poses = []
         self.idle = False
 
-class FakeObjectDetection():
+class FakeObjectDetection:
     def __init__(self, robot):
         self.robot = robot
         self.bridge = cv_bridge.CvBridge()
-        self.downscale = 4 # How much to downscale the camera image by
+        self.downscale = 4  # How much to downscale the camera image by
 
         cv2.namedWindow('Green Object Detection', 1)
         rospy.Subscriber('camera/rgb/image_raw', Image, self.get_image_data)
@@ -167,7 +172,7 @@ class FakeObjectDetection():
     def get_image_data(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         (h, w) = image.shape[:2]
-        image_resized = cv2.resize(image, (w/self.downscale, h/self.downscale))
+        image_resized = cv2.resize(image, (w / self.downscale, h / self.downscale))
         (h_resized, w_resized) = image_resized.shape[:2]
         hsv = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, (36, 25, 25), (70, 255, 255))
@@ -179,11 +184,11 @@ class FakeObjectDetection():
             m = cv2.moments(contour)
 
             area = m['m00']
-            if area > 30: # The brick wall has small green contours that we want to ignore
+            if area > 30:  # The brick wall has small green contours that we want to ignore
                 cx = int(m['m10'] / m['m00'])
                 cy = int(m['m01'] / m['m00'])
 
-                error = cx - w_resized/2
+                error = cx - w_resized / 2
                 if error < closest_to_centre:
                     closest_to_centre = error
 
@@ -195,4 +200,3 @@ class FakeObjectDetection():
         # Show the mask
         cv2.imshow("Green Object Detection", mask)
         cv2.waitKey(3)
-

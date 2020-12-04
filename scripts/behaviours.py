@@ -7,6 +7,7 @@ from sequencer import *
 from pose import Pose
 from areaofinterest import AreaOfInterestFinder
 
+
 class Behaviour:
     # Static variable
     velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
@@ -15,6 +16,7 @@ class Behaviour:
 
     def act(self, robot, sequencer):
         print("Error: child class should override this")
+
 
 class Exploration(Behaviour):
     def __init__(self):
@@ -26,44 +28,17 @@ class Exploration(Behaviour):
     def act(self, robot, sequencer):
         aoif = robot.aoif
 
-        if (not aoif.closest_area == -1):
-            if not aoif.closest_cx == self.last_goal_x and not aoif.closest_cy == self.last_goal_y:
-                self.idle_resend = False
-                self.last_goal_x = aoif.closest_cx
-                self.last_goal_y = aoif.closest_cy
+        #rospy.loginfo('aoif furthest cx, cy: ' + str(robot.aoif.furthest_cx) + ', ' + str(robot.aoif.furthest_cy))
 
-                # TODO: Convert gx, gy to px, py
-                wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
-                                             aoif.closest_cy / aoif.scale)
-                robot.send_nav_goal(wx, -wy) # -wy because we flip it vertically
+        if sequencer.cycles % 5 == 0:
+            wx, wy = robot.grid.to_world(aoif.furthest_cx / aoif.scale,
+                                         aoif.furthest_cy / aoif.scale)
+            rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
+            self.last_goal_x = wx
+            self.last_goal_y = wy
 
-"""class ExplorationUnsticking(Behaviour):
-    def __init__(self, sequencer):
-        Behaviour.__init__(self, "ExplorationUnsticking")
+            robot.send_nav_goal(wx, -wy)
 
-        self.sequencer = sequencer
-        self.velocity_set = False
-        self.cycles = 0
-
-    def act(self, robot, sequencer):
-        robot.cancel_nav_goals()
-
-        if not self.velocity_set:
-            rospy.loginfo("Beginning Unsticking")
-            twist = Twist()
-            twist.linear.x = 0
-            twist.angular.z = 0.1
-            Behaviour.velocity_publisher.publish(twist)
-            self.velocity_set = True
-
-        self.cycles = self.cycles + 1
-        if self.cycles > 50:
-            twist = Twist()
-            twist.linear.x = 0.
-            twist.angular.z = 0.
-            Behaviour.velocity_publisher.publish(twist)
-            self.sequencer.robot.idle_tracker.flush()
-            self.sequencer.unstuck()"""
 
 class Homing(Behaviour):
     def __init__(self, sequencer):
@@ -74,7 +49,7 @@ class Homing(Behaviour):
         self.ang_vel = 0
 
     def act(self, robot, sequencer):
-        if robot.last_laser_msg == None:
+        if robot.last_laser_msg is None:
             return
 
         # First check if we're sufficiently close to an object, in which case we'll either ignore homing /

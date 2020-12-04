@@ -8,20 +8,19 @@ from status import StatusWindow
 class Sequencer:
     def __init__(self, robot, status_window):
         self.robot = robot
-        self.status_window = status_window
         self.cycles = 0
+        self.status_window = StatusWindow(robot)
         self.current_behaviour = Exploration()
 
     def sequence(self, robot):
-        rate = rospy.Rate(25)
+        rate = rospy.Rate(5)
 
         self.cycles = self.cycles + 1
         while not rospy.is_shutdown():
+            self.cycles += 1
             # rospy.loginfo("Behaviour: " + self.current_behaviour.name)
             self.current_behaviour.act(robot, self)
-            self.cycles = self.cycles + 1
             self.status_window.update(self.cycles)
-
             rate.sleep()
 
     """def warn_idle(self):
