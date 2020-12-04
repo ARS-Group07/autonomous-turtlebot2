@@ -8,14 +8,13 @@ from pose import Pose
 from areaofinterest import AreaOfInterestFinder
 
 class Behaviour:
+    # Static variable
+    velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
     def __init__(self, name):
         self.name = name
 
     def act(self, robot, sequencer):
         print("Error: child class should override this")
-
-    def warn_idle(self):
-        i = 1
 
 class Exploration(Behaviour):
     def __init__(self):
@@ -28,13 +27,7 @@ class Exploration(Behaviour):
         aoif = robot.aoif
 
         if (not aoif.closest_area == -1):
-            send = False
-            if self.idle_resend:
-                send = True
-            elif not aoif.closest_cx == self.last_goal_x and not aoif.closest_cy == self.last_goal_y:
-                send = True
-
-            if send:
+            if not aoif.closest_cx == self.last_goal_x and not aoif.closest_cy == self.last_goal_y:
                 self.idle_resend = False
                 self.last_goal_x = aoif.closest_cx
                 self.last_goal_y = aoif.closest_cy
@@ -42,18 +35,37 @@ class Exploration(Behaviour):
                 # TODO: Convert gx, gy to px, py
                 wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
                                              aoif.closest_cy / aoif.scale)
-                robot.send_nav_goal(wx, wy)
-                rospy.loginfo("Sending goal")
+                robot.send_nav_goal(wx, -wy) # -wy because we flip it vertically
 
-    def warn_idle(self):
-        rospy.loginfo("Warning: robot is idle while it is supposed to be exploring")
-        self.idle_resend = True
+"""class ExplorationUnsticking(Behaviour):
+    def __init__(self, sequencer):
+        Behaviour.__init__(self, "ExplorationUnsticking")
 
+        self.sequencer = sequencer
+        self.velocity_set = False
+        self.cycles = 0
+
+    def act(self, robot, sequencer):
+        robot.cancel_nav_goals()
+
+        if not self.velocity_set:
+            rospy.loginfo("Beginning Unsticking")
+            twist = Twist()
+            twist.linear.x = 0
+            twist.angular.z = 0.1
+            Behaviour.velocity_publisher.publish(twist)
+            self.velocity_set = True
+
+        self.cycles = self.cycles + 1
+        if self.cycles > 50:
+            twist = Twist()
+            twist.linear.x = 0.
+            twist.angular.z = 0.
+            Behaviour.velocity_publisher.publish(twist)
+            self.sequencer.robot.idle_tracker.flush()
+            self.sequencer.unstuck()"""
 
 class Homing(Behaviour):
-    # Static variable
-    velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-
     def __init__(self, sequencer):
         Behaviour.__init__(self, "Homing")
 
@@ -79,4 +91,4 @@ class Homing(Behaviour):
             robot.set_object_found(self.current_object_type)
             self.sequencer.finished_homing()
 
-        Homing.velocity_publisher.publish(twist)
+        Behaviour.velocity_publisher.publish(twist)

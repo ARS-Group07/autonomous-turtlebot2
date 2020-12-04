@@ -9,26 +9,27 @@ class Sequencer:
     def __init__(self, robot, status_window):
         self.robot = robot
         self.status_window = status_window
-        self.status_update_every = 5
-
         self.cycles = 0
         self.current_behaviour = Exploration()
 
     def sequence(self, robot):
         rate = rospy.Rate(25)
 
+        self.cycles = self.cycles + 1
         while not rospy.is_shutdown():
             # rospy.loginfo("Behaviour: " + self.current_behaviour.name)
             self.current_behaviour.act(robot, self)
-
             self.cycles = self.cycles + 1
-            if self.cycles % self.status_update_every == 0:
-                self.status_window.update()
+            self.status_window.update(self.cycles)
 
             rate.sleep()
 
-    def warn_idle(self):
-        self.current_behaviour.warn_idle()
+    """def warn_idle(self):
+        if isinstance(self.current_behaviour, Exploration):
+            self.current_behaviour = ExplorationUnsticking(self)"""
+
+    """def unstuck(self):
+        self.current_behaviour = Exploration()"""
 
     # Call of this function may come from various threads (i.e. topics from other nodes)
     def begin_homing(self, object_id, homing_ang_vel):
@@ -37,6 +38,7 @@ class Sequencer:
         if (self.robot.is_object_found(object_id)):
             return
 
+        """or isinstance(self.current_behaviour, ExplorationUnsticking)"""
         if isinstance(self.current_behaviour, Exploration):
             rospy.loginfo("[HOMING] Homing towards obj " + str(object_id))
 

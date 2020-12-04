@@ -26,7 +26,7 @@ class Robot:
         self.nav_client = nav_client
         self.pose = Pose(x, y, yaw)
         self.sequencer = sequencer
-        self.idle_tracker = IdleTracker(self, 0.0001, 15)
+        self.idle_tracker = IdleTracker(self, 0.0001, 30)
 
         # ========== HOMING & OBJECT DETECTION ==========
         # Mappings:
@@ -115,7 +115,8 @@ class Robot:
         self.nav_client.send_goal(goal)
         rospy.loginfo("Sent goal (" + str(goal.target_pose.pose.position.x) + ", " + str(
             goal.target_pose.pose.position.y) + "). Now waiting")
-        wait = self.nav_client.wait_for_result()
+        wait = self.nav_client.wait_for_result(rospy.Duration(1))
+        #wait = self.nav_client.wait_for_result()
 
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()
@@ -149,8 +150,10 @@ class IdleTracker():
             cumulative_dist = cumulative_dist + pose_i.dist(pose_j)
 
         self.idle = cumulative_dist < self.idle_threshold
-        if self.idle:
-            self.robot.sequencer.warn_idle()
+
+    def flush(self):
+        self.poses = []
+        self.idle = False
 
 class FakeObjectDetection():
     def __init__(self, robot):
