@@ -12,6 +12,9 @@ Launch RViz with map
 roslaunch turtlebot3_navigation turtlebot3_navigation.launch map_file:=$HOME/catkin_ws/src/ars/src/clean_map.yaml
 ```
 
-info 
+To remove ghost walls after setting 2D pose estimate in RViz
+```bash
+rosservice call /move_base/clear_costmaps
+```
 
 
