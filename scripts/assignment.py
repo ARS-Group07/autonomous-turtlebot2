@@ -64,7 +64,7 @@ if __name__ == '__main__':
 
         # Localise ourself using Monte Carlo if we're not skipping (takes a lot of time to initialise)
         skip_localisation = False
-        if (not skip_localisation):
+        if not skip_localisation:
             localise(laser_angles)
         # once localised, continue to the remainder of the code ...
 
@@ -76,11 +76,11 @@ if __name__ == '__main__':
         grid_vis = GridVisualiser(grid)
         aoif = AreaOfInterestFinder(grid, scale=4)
 
-        the_robot = Robot(grid=grid, grid_resolution = grid_resolution, grid_vis=grid_vis,
-                          aoif=aoif, laser_angles = laser_angles,laser_range_max=laser_range_max,
-                          nav_client=nav_client, use_amcl_localisation=(not skip_localisation))
+        the_robot = Robot(grid=grid, grid_resolution=grid_resolution, grid_vis=grid_vis,
+                          aoif=aoif, laser_angles=laser_angles, laser_range_max=laser_range_max,
+                          nav_client=nav_client, use_amcl_localisation=(not skip_localisation), map_arr=map_arr)
         the_robot.sequencer = Sequencer(the_robot)
         the_robot.sequencer.sequence(the_robot)
-        
+
     except rospy.ROSInterruptException:
         rospy.loginfo('ROSInterruptException encountered at %s' % rospy.get_time())

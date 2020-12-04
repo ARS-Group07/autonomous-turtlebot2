@@ -7,12 +7,14 @@ from sequencer import *
 from pose import Pose
 from areaofinterest import AreaOfInterestFinder
 
+
 class Behaviour:
     def __init__(self, name):
         self.name = name
 
     def act(self, robot, sequencer):
         print("Error: child class should override this")
+
 
 class Exploration(Behaviour):
     def __init__(self):
@@ -22,15 +24,17 @@ class Exploration(Behaviour):
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
-        if (not aoif.closest_area == -1):
-            if ((not aoif.closest_cx == self.last_goal_x) and (not aoif.closest_cy == self.last_goal_y)):
-                self.last_goal_x = aoif.closest_cx
-                self.last_goal_y = aoif.closest_cy
+        # rospy.loginfo('aoif closest cx, cy: ' + str(robot.aoif.closest_cx) + ', ' + str(robot.aoif.closest_cy))
+        if (not aoif.closest_cx == self.last_goal_x) and (not aoif.closest_cy == self.last_goal_y):
+            self.last_goal_x = aoif.closest_cx
+            self.last_goal_y = aoif.closest_cy
 
-                # TODO: Convert gx, gy to px, py
-                wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
-                                             aoif.closest_cy / aoif.scale)
-                robot.send_nav_goal(wx, wy)
+            # TODO: Convert gx, gy to px, py
+            wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
+                                         aoif.closest_cy / aoif.scale)
+            rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
+            robot.send_nav_goal(wx, wy)
+
 
 class Homing(Behaviour):
     # Static variable
@@ -45,7 +49,7 @@ class Homing(Behaviour):
         self.ang_vel = 0
 
     def act(self, robot, sequencer):
-        if robot.last_laser_msg == None:
+        if robot.last_laser_msg is None:
             return
 
         # First check if we're sufficiently close to an object, in which case we'll either ignore homing /

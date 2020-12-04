@@ -5,8 +5,6 @@ import numpy as np
 
 class Grid:
 
-    ## TODO - MAP STUFF HERE - DECIDE WHETHER THIS HAS ALREADY BEEN DETECTED (ALTHOUGH, THIS IS RESOLUTUION DEPENDENT)
-
     def __init__(self, size=19.2, resolution=0.2, map_arr=None):
         self.origin_x = -10.  # from map .yaml file
         self.origin_y = -10.
@@ -16,7 +14,7 @@ class Grid:
         self.prev_index = ()
 
         # Create a 2D array of 0.5's using the map, which will represent the probability grid
-        self.grid = map_arr
+        self.grid = np.copy(map_arr)
         rospy.loginfo('self.grid shape: ' + str(self.grid.shape))
 
     def update_grid(self, px, py, flag):
@@ -51,7 +49,16 @@ class Grid:
         """ Given a grid point (gx, gy), return the odometry point (px, py). """
         px = gx * self.resolution + self.origin_x
         py = gy * self.resolution + self.origin_y
-        return int(px), int(py)
+        return px, py
+
+    def is_fully_explored(self):
+        unexplored_mask = np.where(self.grid == 0.5, 1, 0)
+        unexplored_points = np.sum(unexplored_mask)
+        # realistically < 200 is probably better but 1200 is demonstrating the effect
+        return unexplored_points < 1200
+
+    def reset_grid(self, map_arr):
+        self.grid = np.copy(map_arr)
 
 
 class GridVisualiser:
