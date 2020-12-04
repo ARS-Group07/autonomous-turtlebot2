@@ -28,6 +28,7 @@ class Robot:
         self.pose = Pose(x, y, yaw)
         self.sequencer = sequencer
         self.map_arr = map_arr
+        self.idle_tracker = IdleTracker(self, 0.0001, 30)
 
         # ========== HOMING & OBJECT DETECTION ==========
         # Mappings:
@@ -92,14 +93,16 @@ class Robot:
         # build contours here, update best contour cx, cy
         self.aoif.get_grid_contours(self.pose.px, self.pose.py)
 
+        # Update the current position for the robot within the idle tracker since AMCL only sends messages
+        # when the robot moves
+        self.idle_tracker.track(self.pose)
+
     def is_object_found(self, object_type):
         return self.objects_found.get(object_type)
 
     def set_object_found(self, object_type):
         if not self.is_object_found(object_type):
             print("FINALLY FOUND OBJECT " + str(object_type))
-            while True:
-                i = 1
 
         self.objects_found[object_type] = True
 
@@ -120,6 +123,39 @@ class Robot:
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()
 
+class IdleTracker():
+    # idle_threshold is the maximum euclidean distance a robot can travel before it is no longer idle
+    # poses_stored is how many of the last x poses to store when considering if the robot is idle
+    def __init__(self, robot, idle_threshold, poses_stored):
+        self.robot = robot
+        self.idle_threshold = idle_threshold
+        self.poses_stored = poses_stored
+        self.poses = [] # poses[poses_stored - 1] is the latest pose
+        self.idle = False
+
+    def track(self, pose):
+        if (len(self.poses) == self.poses_stored):
+            self.poses.pop(0)
+
+        self.poses.append(Pose(pose.px, pose.py, pose.yaw))
+        self.update_idle()
+
+    def update_idle(self):
+        if (len(self.poses) != self.poses_stored): # Insufficient data to determine whether idle
+            self.idle = False
+            return
+
+        cumulative_dist = 0.
+        for i in range(0, self.poses_stored - 3):
+            pose_i = self.poses[i]
+            pose_j = self.poses[i + 1]
+            cumulative_dist = cumulative_dist + pose_i.dist(pose_j)
+
+        self.idle = cumulative_dist < self.idle_threshold
+
+    def flush(self):
+        self.poses = []
+        self.idle = False
 
 class FakeObjectDetection:
     def __init__(self, robot):

@@ -19,16 +19,21 @@ class Behaviour:
 class Exploration(Behaviour):
     def __init__(self):
         Behaviour.__init__(self, "Exploration")
+        self.last_goal_x = 0
+        self.last_goal_y = 0
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
-        rospy.loginfo('aoif closest cx, cy: ' + str(robot.aoif.closest_cx) + ', ' + str(robot.aoif.closest_cy))
 
-        if sequencer.i % 5 == 0:
-            sequencer.i = 0
-            wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
-                                         aoif.closest_cy / aoif.scale)
+        #rospy.loginfo('aoif furthest cx, cy: ' + str(robot.aoif.furthest_cx) + ', ' + str(robot.aoif.furthest_cy))
+
+        if sequencer.cycles % 5 == 0:
+            wx, wy = robot.grid.to_world(aoif.furthest_cx / aoif.scale,
+                                         aoif.furthest_cy / aoif.scale)
             rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
+            self.last_goal_x = wx
+            self.last_goal_y = wy
+
             robot.send_nav_goal(wx, -wy)
 
 

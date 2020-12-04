@@ -3,22 +3,23 @@ import thread
 
 from robot import Robot
 from behaviours import *
-
+from status import StatusWindow
 
 class Sequencer:
     def __init__(self, robot):
         self.robot = robot
-        self.i = 0
-
+        self.cycles = 0
+        self.status_window = StatusWindow(robot)
         self.current_behaviour = Exploration()
 
     def sequence(self, robot):
         rate = rospy.Rate(5)
 
         while not rospy.is_shutdown():
-            self.i += 1
+            self.cycles += 1
             # rospy.loginfo("Behaviour: " + self.current_behaviour.name)
             self.current_behaviour.act(robot, self)
+            self.status_window.update(self.cycles)
             rate.sleep()
 
     # Call of this function may come from various threads (i.e. topics from other nodes)
