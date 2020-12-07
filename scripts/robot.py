@@ -48,7 +48,7 @@ class Robot:
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
 
         # Create the fake object detection
-        # self.fake_object_detection = FakeObjectDetection(self)
+        self.fake_object_detection = FakeObjectDetection(self)
 
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
