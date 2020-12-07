@@ -48,7 +48,7 @@ class Robot:
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
 
         # Create the fake object detection
-        self.fake_object_detection = FakeObjectDetection(self)
+        #self.fake_object_detection = FakeObjectDetection(self)
 
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
@@ -100,12 +100,9 @@ class Robot:
     def is_object_found(self, object_type):
         return self.objects_found.get(object_type)
 
-   # def all_objects_found(self):
-   #     for object_id in range(0, 4):
-
     def set_object_found(self, object_type):
         if not self.is_object_found(object_type):
-            print("FINALLY FOUND OBJECT " + str(object_type))
+            print("FOUND OBJECT " + str(object_type))
 
         self.objects_found[object_type] = True
 
@@ -160,6 +157,7 @@ class IdleTracker():
         self.poses = []
         self.idle = False
 
+'''
 class FakeObjectDetection:
     def __init__(self, robot):
         self.robot = robot
@@ -200,3 +198,4 @@ class FakeObjectDetection:
         # Show the mask
         cv2.imshow("Green Object Detection", mask)
         cv2.waitKey(3)
+'''

@@ -7,4 +7,4 @@ class Paths:
     CONFIG_FILE = BASE_PATH +  'cfg/yolov3.cfg'
     LABELS_FILE = BASE_PATH + 'data/coco.names'
     WEIGHTS_FILE = BASE_PATH + 'data/yolov3.weights'
-    TEXT_FILE = "data/frozen_east_text_detection.pb"
+    TEXT_FILE = BASE_PATH + "data/frozen_east_text_detection.pb"
