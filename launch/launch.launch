@@ -1,4 +1,8 @@
 <launch>
   <node name="move_base" pkg="move_base" type="move_base" output="screen"/>
   <node name="assignment" pkg="ars" type="assignment.py" output="screen"/>
+
+  <node name="bluegreen_detection" pkg="ars" type="bluegreen.py" output="screen"/>
+  <node name="hydrant_detection" pkg="ars" type="hydrant.py" output="screen"/>
+  <node name="text_detection" pkg="ars" type="text.py" output="screen"/>
 </launch>

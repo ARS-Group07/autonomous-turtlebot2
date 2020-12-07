@@ -1,3 +1,7 @@
 *.pyc
 .idea/
 .idea/
+
+# For files that are too large to share collaboratively
+store/cfg/
+store/data/
