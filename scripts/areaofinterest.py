@@ -21,7 +21,11 @@ class AreaOfInterestFinder:
         unexplored_mask = cv2.inRange(image, 0.499, 0.501)
 
         # find all discrete unexplored areas
-        _, contours, hierarchy = cv2.findContours(unexplored_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        to_unpack = cv2.findContours(unexplored_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        import rospy
+        rospy.loginfo("SIZE OF TO_UNPACK: " + str(len(to_unpack)))
+        contours = to_unpack[0]
+        hierarchy = to_unpack[1]
 
         self.furthest_dist = -1
         for i, c in enumerate(contours):
