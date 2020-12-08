@@ -51,8 +51,6 @@ class Homing(Behaviour):
         self.laser_angles = laser_angles
         self.current_object_type = -1
 
-        self.last_goal_x = -1e6
-        self.last_goal_y = -1e6
         self.target_pose = None
 
     def set_target(self, robot, detection_msg):
@@ -93,9 +91,7 @@ class Homing(Behaviour):
                 self.finished(robot)
                 return
 
-        if self.target_pose.px != self.last_goal_x and self.target_pose.py != self.last_goal_y:
-            self.last_goal_x = self.target_pose.px
-            self.last_goal_y = self.target_pose.py
+        if sequencer.cycles % sequencer.sequence_hz == 0:
             robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)
             rospy.loginfo("Sending nav goal for homing to " + str(self.target_pose.px) + ", " + str(self.target_pose.py))
 
