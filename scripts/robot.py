@@ -56,6 +56,7 @@ class Robot:
         px = msg.pose.pose.position.x
         py = msg.pose.pose.position.y
 
+        rospy.loginfo('curr px: ' + str(px) + ', curr py: ' + str(py))
         self.pose.update_pose(px, py, yaw)
         self.grid.update_grid(px, py, flag='CURR')
         self.grid_vis.update_plot()

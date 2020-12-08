@@ -33,12 +33,12 @@ class AreaOfInterestFinder:
             area = m['m00']
 
             # don't include very small areas as areas of interest
-            if area < 200.:
+            if area < 230.:
                 continue
             cx = int(m['m10'] / m['m00'])
             cy = int(m['m01'] / m['m00'])
 
-            dist = math.sqrt((cx - robot_x) ** 2 + (cy - robot_y) ** 2)
+            dist = math.sqrt(((cx / self.scale) - robot_x) ** 2 + ((-cy / self.scale) - robot_y) ** 2)
             if dist < self.closest_dist:
                 self.closest_area = area
                 self.closest_dist = dist

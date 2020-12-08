@@ -19,22 +19,20 @@ class Exploration(Behaviour):
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
-        rospy.loginfo('aoif closest cx, cy: ' + str(robot.aoif.closest_cx) + ', ' + str(robot.aoif.closest_cy))
 
-        # only check once per second
-        if sequencer.i % sequencer.sequence_hz == 0:
+        # only update goal once every 2 seconds
+        if sequencer.i % (sequencer.sequence_hz * 2) == 0:
             sequencer.i = 0
             wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale, aoif.closest_cy / aoif.scale)
 
             if self.prev_cx == aoif.closest_cx and self.prev_cy == aoif.closest_cy:
                 rospy.loginfo('contour not moved: randomizing position slightly ')
-                wx += round(random.random() / 2, 1) - 0.3
-                wy += round(random.random() / 2, 1) - 0.3
+                wx += round(random.random(), 1) - 0.5
+                wy += round(random.random(), 1) - 0.5
 
             self.prev_cx = aoif.closest_cx
             self.prev_cy = aoif.closest_cy
-            rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
-            robot.send_nav_goal(wx, -wy)
+            robot.send_nav_goal(wx, -wy - 0.5)  # hack because y always slightly shifted; probably map is a bit off
 
 
 class Homing(Behaviour):
