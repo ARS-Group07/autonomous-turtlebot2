@@ -15,10 +15,9 @@ from ars.msg import Detection
 #from sensor_msgs.msg import Image
 #from std_msgs.msg import String
 
-
 class Robot:
     def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, nav_client, map_arr,
-                 x=0., y=0., yaw=0., sequencer=None, use_amcl_localisation=True):
+                 x=0., y=0., yaw=0., sequencer=None):
         self.grid = grid
         self.grid_resolution = grid_resolution
         self.grid_vis = grid_vis
@@ -42,10 +41,7 @@ class Robot:
         self.last_laser_msg = None
         self.homing_vel = 0
 
-        if use_amcl_localisation:
-            rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
-        else:
-            rospy.Subscriber('odom', Odometry, self.get_odom_data)
+        rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
 
         # Object detection
@@ -106,6 +102,7 @@ class Robot:
 
     def object_detected_calback(self, msg):
         rospy.loginfo("OBJECT DETECTED. ID: " + str(msg.id))
+        self.sequencer.try_to_home(0, msg)
 
     def is_object_found(self, object_type):
         return self.objects_found.get(object_type)

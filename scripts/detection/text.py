@@ -62,7 +62,6 @@ class TextSensor:
                detection_msg.z = z
                self.detection_pub_text.publish(detection_msg)
 
-
 rospy.init_node('TextSensor')
 analyzer = TextSensor()
 rospy.spin()

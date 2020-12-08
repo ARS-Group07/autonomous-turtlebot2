@@ -1,5 +1,6 @@
 import rospy
 import random
+import numpy as np
 
 from geometry_msgs.msg import Twist
 
@@ -7,7 +8,6 @@ from behaviours import *
 from sequencer import *
 from pose import Pose
 from areaofinterest import AreaOfInterestFinder
-
 
 class Behaviour:
     # Static variable
@@ -17,7 +17,6 @@ class Behaviour:
 
     def act(self, robot, sequencer):
         print("Error: child class should override this")
-
 
 class Exploration(Behaviour):
     def __init__(self):
@@ -50,24 +49,36 @@ class Homing(Behaviour):
         self.sequencer = sequencer
         self.laser_angles = laser_angles
         self.current_object_type = -1
-        self.ang_vel = 0
+
+        self.target_pose = None
+
+    def set_target(self, robot, detection_msg):
+        self.current_object_type = detection_msg.id
+
+        # Calculate the angle from the robot to the object
+        vec_to = [detection_msg.x, detection_msg.y]
+        vec_from = [robot.pose.x. self.robot.pose.y]
+        unit_to = vec_to / np.linalg.norm(vec_to)
+        unit_from = vec_from / np.linalg.norm(vec_from)
+        dot_product = np.dot(unit_to, unit_from)
+        angle = np.arccos(dot_product)
+
+        # Determine the distance between the robot and the object
+        pose_to = Pose(detection_msg.x, detection_msg.y, 0)
+        dist = pose_to.dist(robot.pose)
+
+        target_pose = None
+        if dist > 1.0: # It's too far so the robot needs to move towards the object
+            target_pose = Pose(detection_msg.x, detection_msg.y, angle)
+        else: # It's close enough so all we need to do is specify the angle
+            target_pose = Pose(robot.x, robot.y, angle)
+        self.target_pose = target_pose
 
     def act(self, robot, sequencer):
-        if robot.last_laser_msg is None:
-            return
+        i = 1
+        # TODO: Do something with move_base to move towards it
+        # TODO: Check if we're sufficiently closed (angular & euclidean dist)
 
-        # First check if we're sufficiently close to an object, in which case we'll either ignore homing /
-        laser_distances = [robot.last_laser_msg.ranges[i] for i in self.laser_angles]
-        min_dist = min(laser_distances)
-
-        twist = Twist()
-        if min_dist < 1.0:
-            twist.linear.x = 0.1
-            twist.angular.z = self.ang_vel
-        else:
-            twist.linear.x = 0.
-            twist.angular.z = 0.
-            robot.set_object_found(self.current_object_type)
-            self.sequencer.finished_homing()
-
-        Behaviour.velocity_publisher.publish(twist)
+    def finished(self, robot):
+        robot.set_object_found(self.current_object_type)
+        self.sequencer.finished_homing()

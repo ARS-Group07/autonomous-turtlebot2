@@ -125,8 +125,6 @@ class TextDetector:
                 if i == '5':
                     self.flag = True
 
-            
-
         # show the output image
         cv2.imshow("Text Detection", orig)
         cv2.waitKey(3)
