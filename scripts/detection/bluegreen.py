@@ -84,6 +84,7 @@ class BlueGreenDetector:
                 detection_msg.z = z
 
                 self.detection_pub_green.publish(detection_msg)
+                rospy.loginfo('Published green box location as x=' + str(x) + ', y=' + str(y) + ', z=' + str(z))
 
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 

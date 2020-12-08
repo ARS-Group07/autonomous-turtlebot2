@@ -19,7 +19,10 @@ class Sequencer:
             self.cycles += 1
             # rospy.loginfo("Behaviour: " + self.current_behaviour.name)
             self.current_behaviour.act(robot, self)
-            self.status_window.update(self.cycles)
+
+            if self.cycles % 10 == 0:
+                self.status_window.update(self.cycles)
+
             rate.sleep()
 
     # Call of this function may come from various threads (i.e. topics from other nodes)

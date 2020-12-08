@@ -23,8 +23,8 @@ class HydrantDetector:
     def __init__(self):
         self.depthSensor = depth.DepthSensor()
         self.bridge = cv_bridge.CvBridge()
-        self.image_sub_fire_hydrant = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_fire_hydrant)
         self.net = cv2.dnn.readNetFromDarknet(Paths.CONFIG_FILE, Paths.WEIGHTS_FILE)
+        self.image_sub_fire_hydrant = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_fire_hydrant)
         self.detection_pub_hydrant = rospy.Publisher('detection_hydrant', Detection)
 
     def image_callback_fire_hydrant(self, msg):
@@ -45,7 +45,7 @@ class HydrantDetector:
         start = time.time()
         layer_outputs = self.net.forward(ln)
         end = time.time()
-        print("[INFO] YOLO took {:.6f} seconds".format(end - start))
+        #print("[INFO] YOLO took {:.6f} seconds".format(end - start))
 
         boxes = []
         confidences = []
