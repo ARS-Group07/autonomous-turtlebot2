@@ -20,10 +20,10 @@ class StatusWindow:
         behaviour = behaviour + ['Idle: ' + str(self.robot.idle_tracker.idle)]
 
         objects = ['Objects found:',
-                   '  Green cuboid: ' + str(self.robot.is_object_found(0)),
-                   '  Red hydrant: ' + str(self.robot.is_object_found(1)),
-                   '  Blue mailbox: ' + str(self.robot.is_object_found(2)),
-                   '  White cube: ' + str(self.robot.is_object_found(3))]
+                   '  Green cuboid: ' + str(self.robot.is_object_found(0)) + '(' + str(self.robot.get_object_detected(0)) + ')',
+                   '  Red hydrant: ' + str(self.robot.is_object_found(1)) + '(' + str(self.robot.get_object_detected(1)) + ')',
+                   '  Blue mailbox: ' + str(self.robot.is_object_found(2)) + '(' + str(self.robot.get_object_detected(2)) + ')',
+                   '  White cube: ' + str(self.robot.is_object_found(3)) + '(' + str(self.robot.get_object_detected(3)) + ')']
 
         offset = 30
         x, y = 10, 30

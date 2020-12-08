@@ -80,6 +80,16 @@ class Homing(Behaviour):
         # TODO: Do something with move_base to move towards it
         # TODO: Check if we're sufficiently closed (angular & euclidean dist)
 
+        # Firstly check if we're close enough
+        if self.robot.pose.dist(self.target_pose) < 1.0: # TODO - Check if its been idle for a while?
+            # Check if the angular distance is sufficient: is it looking at the object?
+            if self.robot.pose.ang_dist(self.target_pose) < 0.2:
+                self.finished(robot)
+                robot.cancel_nav_goals()
+                return
+
+        robot.send_nav_goal(self.target_pose.x, self.target_pose.y, self.target_pose.yaw)
+
     def finished(self, robot):
         robot.set_object_found(self.current_object_type)
         self.sequencer.finished_homing()

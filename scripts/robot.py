@@ -5,7 +5,7 @@ import rospy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import LaserScan
-from tf.transformations import euler_from_quaternion
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from ars.msg import Detection
 
@@ -31,7 +31,8 @@ class Robot:
         # 1 - Red fire hydrant
         # 2 - Blue mailbox
         # 3 - White, numbered (5) cube
-        self.objects_found = {0: False, 1: False, 2: False, 3: False}
+        self.objects_found = {0: False, 1: False, 2: False, 3: False} # Whether it's been found
+        self.objects_seen = {0: 0, 1: 0, 2: 0, 3: 0}                  # How many times it's been seen / detected
 
         self.last_laser_msg = None
         self.homing_vel = 0
@@ -98,7 +99,12 @@ class Robot:
 
     def object_detected_calback(self, msg):
         rospy.loginfo("OBJECT DETECTED. ID: " + str(msg.id))
+        self.objects_seen[msg.id] = self.objects_seen[msg.id] + 1
         self.sequencer.try_to_home(msg)
+
+    # Get how many times an object has been detected
+    def get_object_detected(self, object_type):
+        return self.objects_seen[object_type]
 
     def is_object_found(self, object_type):
         return self.objects_found.get(object_type)
@@ -109,7 +115,7 @@ class Robot:
 
         self.objects_found[object_type] = True
 
-    def send_nav_goal(self, px, py):
+    def send_nav_goal(self, px, py, yaw = -1.0):
         self.cancel_nav_goals()
 
         goal = MoveBaseGoal()
@@ -117,7 +123,15 @@ class Robot:
         goal.target_pose.header.stamp = rospy.Time.now()
         goal.target_pose.pose.position.x = px
         goal.target_pose.pose.position.y = py
-        goal.target_pose.pose.orientation.w = 1.0
+        if yaw == -1.0:
+            goal.target_pose.pose.orientation.w = 1.0
+        else:
+            euler = (0, 0, yaw)
+            quaternion = quaternion_from_euler(euler)
+            goal.target_pose.pose.orientation.x = quaternion[0]
+            goal.target_pose.pose.orientation.y = quaternion[1]
+            goal.target_pose.pose.orientation.z = quaternion[2]
+            goal.target_pose.pose.orientation.w = quaternion[3]
         self.nav_client.send_goal(goal)
         rospy.loginfo("Sent goal (" + str(goal.target_pose.pose.position.x) + ", " + str(
             goal.target_pose.pose.position.y) + "). Now waiting")
