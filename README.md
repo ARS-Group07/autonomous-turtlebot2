@@ -75,3 +75,8 @@ roslaunch turtlebot3_navigation turtlebot3_navigation.launch map_file:=$HOME/cat
 ```bash
 rosservice call /move_base/clear_costmaps
 ```
+
+### Step 4: Launch
+```bash
+roslaunch ars launch.launch
+```
