@@ -73,7 +73,7 @@ class GridVisualiser:
         print ("Shape X: " + str(self.shape_x))
         print ("Shape Y: " + str(self.shape_x))
 
-        cv2.namedWindow('Map of explored space', 2)
+        cv2.namedWindow('Map of explored space')
         self.update_plot()
 
     @staticmethod

@@ -2,10 +2,9 @@
 #
 import messagehelper
 import rospy
-import sequencer
 import actionlib
 
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from move_base_msgs.msg import MoveBaseAction
 from robot import Robot
 from localise import Localiser, Wanderer
 from areaofinterest import AreaOfInterestFinder
@@ -17,11 +16,7 @@ from sensor_msgs.msg import CameraInfo, LaserScan
 
 
 def localise(laser_angles):
-    # SRY 4 THE MESS BEN :'(
-    #
-    #
-    # Localise self before continuing to remainder of program
-    first_amcl_msg = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
+    _ = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
     rospy.loginfo('Got AMCL message, starting robot localisation ... ')
 
     localiser = Localiser()

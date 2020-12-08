@@ -51,7 +51,6 @@ class TextSensor:
                 depth = frame[yc][xc]
 
                 if math.isnan(depth):
-                    rospy.loginfo('infinite depth')
                     return
 
                 z = depth

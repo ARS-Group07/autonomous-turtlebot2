@@ -1,23 +1,23 @@
-import rospy
-import random
-import numpy as np
 import math
+import numpy as np
+import random
 
+import rospy
 from geometry_msgs.msg import Twist
 
-from behaviours import *
-from sequencer import *
 from pose import Pose
-from areaofinterest import AreaOfInterestFinder
+
 
 class Behaviour:
     # Static variable
     velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
     def __init__(self, name):
         self.name = name
 
     def act(self, robot, sequencer):
         print("Error: child class should override this")
+
 
 class Exploration(Behaviour):
     def __init__(self):
@@ -28,7 +28,7 @@ class Exploration(Behaviour):
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
-        if sequencer.cycles % sequencer.sequence_hz== 0:
+        if sequencer.cycles % sequencer.sequence_hz == 0:
             wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
                                          aoif.closest_cy / aoif.scale)
 
@@ -58,7 +58,7 @@ class Homing(Behaviour):
 
         # Calculate the angle from the robot to the object
         vec_to = [robot.pose.x + detection_msg.x, robot.pose.y + detection_msg.y]
-        vec_from = [robot.pose.x. self.robot.pose.y]
+        vec_from = [robot.pose.x.self.robot.pose.y]
         unit_to = vec_to / np.linalg.norm(vec_to)
         unit_from = vec_from / np.linalg.norm(vec_from)
         dot_product = np.dot(unit_to, unit_from)
@@ -68,15 +68,15 @@ class Homing(Behaviour):
         dist_vec = [vec_to[0] - vec_from[0], vec_to[1] - vec_from[0]]
         dist = math.sqrt(dist_vec[0] ** 2 + dist_vec[1] ** 2)
 
-        if dist > 1.0: # It's too far so the robot needs to move towards the object as well as specifying a rotation
+        if dist > 1.0:  # It's too far so the robot needs to move towards the object as well as specifying a rotation
             norm = [dist_vec[0] / dist, dist_vec[1] / dist]
             target_dist = dist - 1.0
-            self.target_pose = Pose(robot.pose.x + target_dist*norm[0], robot.pose.y + target_dist*norm[1], angle)
-        else: # It's close enough so all we need to do is specify the angle
+            self.target_pose = Pose(robot.pose.x + target_dist * norm[0], robot.pose.y + target_dist * norm[1], angle)
+        else:  # It's close enough so all we need to do is specify the angle
             self.target_pose = Pose(robot.pose.x, robot.pose.y, angle)
 
     def act(self, robot, sequencer):
-        i = 1
+        pass
         # TODO: Do something with move_base to move towards it
         # TODO: Check if we're sufficiently closed (angular & euclidean dist)
 

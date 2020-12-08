@@ -26,7 +26,7 @@ class Localiser:
         y_var = covariance_mx[7]
         theta_var = covariance_mx[35]
 
-        rospy.loginfo('Location confidence check: x var: %.4f, y var: %.4f, theta var: %.4f' % (x_var, y_var, theta_var))
+        rospy.loginfo('Location variance check: x var: %.4f, y var: %.4f, theta var: %.4f' % (x_var, y_var, theta_var))
 
         # variance = 0.01 means average of estimates squared distances from the mean estimate = 0.01m^2
         # so average distance is around 0.1m (apply sq. root)

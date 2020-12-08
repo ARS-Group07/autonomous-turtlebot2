@@ -90,7 +90,6 @@ class HydrantDetector:
                     depth = frame[cy][cx]
 
                     if math.isnan(depth):
-                        rospy.loginfo('infinite depth')
                         continue
 
                     z = depth
