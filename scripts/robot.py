@@ -98,7 +98,7 @@ class Robot:
 
     def object_detected_calback(self, msg):
         rospy.loginfo("OBJECT DETECTED. ID: " + str(msg.id))
-        self.sequencer.try_to_home(0, msg)
+        self.sequencer.try_to_home(msg)
 
     def is_object_found(self, object_type):
         return self.objects_found.get(object_type)
