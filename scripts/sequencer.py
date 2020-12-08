@@ -34,12 +34,12 @@ class Sequencer:
             rospy.loginfo("[HOMING] Homing towards obj " + str(detection_msg.id))
 
             self.current_behaviour = Homing(self, self.robot.laser_angles)
-            self.current_behaviour.set_target(detection_msg)
+            self.current_behaviour.set_target(self.robot, detection_msg)
         elif isinstance(self.current_behaviour, Homing):
             # Only update the angular velocity if this function call is for the same object type we've been homing
             # towards
             if self.current_behaviour.current_object_type == detection_msg.id:
-                self.current_behaviour.set_target(detection_msg)  # Just in case anything has changed
+                self.current_behaviour.set_target(self.robot, detection_msg)  # Just in case anything has changed
 
     def finished_homing(self):
         self.current_behaviour = Exploration()
