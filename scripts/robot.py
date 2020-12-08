@@ -113,7 +113,7 @@ class Robot:
             goal.target_pose.pose.orientation.w = 1.0
         else:
             euler = (0, 0, yaw)
-            quaternion = quaternion_from_euler(euler)
+            quaternion = quaternion_from_euler(*euler)
             goal.target_pose.pose.orientation.x = quaternion[0]
             goal.target_pose.pose.orientation.y = quaternion[1]
             goal.target_pose.pose.orientation.z = quaternion[2]

@@ -76,7 +76,6 @@ class Homing(Behaviour):
             self.target_pose = Pose(robot.pose.px, robot.pose.py, angle)
 
     def act(self, robot, sequencer):
-        pass
         # TODO: Do something with move_base to move towards it
         # TODO: Check if we're sufficiently closed (angular & euclidean dist)
 
