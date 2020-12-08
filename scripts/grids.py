@@ -60,6 +60,7 @@ class Grid:
     def reset_grid(self, map_arr):
         self.grid = np.copy(map_arr)
 
+
 class GridVisualiser:
     """ Visualiser class for the grid. """
 
