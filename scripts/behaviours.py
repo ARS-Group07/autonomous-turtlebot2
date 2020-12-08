@@ -58,7 +58,7 @@ class Homing(Behaviour):
 
         # Calculate the angle from the robot to the object
         vec_to = [robot.pose.px + detection_msg.x, robot.pose.py + detection_msg.y]
-        vec_from = [robot.pose.px. robot.pose.py]
+        vec_from = [robot.pose.px, robot.pose.py]
         unit_to = vec_to / np.linalg.norm(vec_to)
         unit_from = vec_from / np.linalg.norm(vec_from)
         dot_product = np.dot(unit_to, unit_from)
@@ -71,28 +71,14 @@ class Homing(Behaviour):
         if dist > 1.0:  # It's too far so the robot needs to move towards the object as well as specifying a rotation
             norm = [dist_vec[0] / dist, dist_vec[1] / dist]
             target_dist = dist - 1.0
-            self.target_pose = Pose(robot.pose.px + target_dist*norm[0], robot.pose.py + target_dist*norm[1], angle)
-        else: # It's close enough so all we need to do is specify the angle
+            self.target_pose = Pose(robot.pose.px + target_dist * norm[0], robot.pose.py + target_dist * norm[1], angle)
+        else:  # It's close enough so all we need to do is specify the angle
             self.target_pose = Pose(robot.pose.px, robot.pose.py, angle)
 
     def act(self, robot, sequencer):
         pass
         # TODO: Do something with move_base to move towards it
         # TODO: Check if we're sufficiently closed (angular & euclidean dist)
-
-        if robot.pose == None or self.target_pose == None:
-            return
-
-        # Firstly check if we're close enough
-        if robot.pose.dist(self.target_pose) < 1.0: # TODO - Check if its been idle for a while?
-            # Check if the angular distance is sufficient: is it looking at the object?
-            if robot.pose.ang_dist(self.target_pose) < 0.2:
-                robot.cancel_nav_goals()
-                self.finished(robot)
-                return
-
-        robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)
-        rospy.loginfo("Sending nav goal for homing to " + str(self.target_pose.px) + ", " + str(self.target_pose.py))
 
     def finished(self, robot):
         robot.set_object_found(self.current_object_type)
