@@ -50,7 +50,7 @@ class TextSensor:
                 frame = np.asarray(depth_image)
                 depth = frame[yc][xc]
 
-                if math.isinf(depth):
+                if math.isnan(depth):
                     rospy.loginfo('infinite depth')
                     return
 
