@@ -2,7 +2,6 @@ from pose import Pose
 import math
 import rospy
 
-from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import LaserScan
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -57,25 +56,12 @@ class Robot:
         px = msg.pose.pose.position.x
         py = msg.pose.pose.position.y
 
-        rospy.loginfo('curr px: ' + str(px) + ', curr py: ' + str(py))
         self.pose.update_pose(px, py, yaw)
         self.grid.update_grid(px, py, flag='CURR')
         self.grid_vis.update_plot()
         if self.grid.is_fully_explored():
             rospy.loginfo('Map fully explored, resetting ...')
             self.grid.reset_grid(self.map_arr)
-
-    def get_odom_data(self, msg):
-        """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
-        quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
-                       msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
-        (_, _, yaw) = euler_from_quaternion(quarternion)
-        px = msg.pose.pose.position.x
-        py = msg.pose.pose.position.y
-
-        self.pose.update_pose(px, py, yaw)
-        self.grid.update_grid(px, py, flag='CURR')
-        self.grid_vis.update_plot()
 
     def get_laser_data(self, msg):
         self.last_laser_msg = msg
@@ -135,13 +121,13 @@ class Robot:
         self.nav_client.send_goal(goal)
         rospy.loginfo("Sent goal (" + str(goal.target_pose.pose.position.x) + ", " + str(
             goal.target_pose.pose.position.y) + "). Now waiting")
-        wait = self.nav_client.wait_for_result(rospy.Duration(1))
+        _ = self.nav_client.wait_for_result(rospy.Duration(1))
 
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()
 
 
-class IdleTracker():
+class IdleTracker:
     # idle_threshold is the maximum euclidean distance a robot can travel before it is no longer idle
     # poses_stored is how many of the last x poses to store when considering if the robot is idle
     def __init__(self, robot, idle_threshold, poses_stored):
@@ -174,47 +160,3 @@ class IdleTracker():
     def flush(self):
         self.poses = []
         self.idle = False
-
-
-'''
-class FakeObjectDetection:
-    def __init__(self, robot):
-        self.robot = robot
-        self.bridge = cv_bridge.CvBridge()
-        self.downscale = 4  # How much to downscale the camera image by
-
-        cv2.namedWindow('Green Object Detection', 1)
-        rospy.Subscriber('camera/rgb/image_raw', Image, self.get_image_data)
-
-    def get_image_data(self, msg):
-        image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
-        (h, w) = image.shape[:2]
-        image_resized = cv2.resize(image, (w / self.downscale, h / self.downscale))
-        (h_resized, w_resized) = image_resized.shape[:2]
-        hsv = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, (36, 25, 25), (70, 255, 255))
-
-        # Now detect contours
-        _, contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        closest_to_centre = 1e10
-        for contour in contours:
-            m = cv2.moments(contour)
-
-            area = m['m00']
-            if area > 30:  # The brick wall has small green contours that we want to ignore
-                cx = int(m['m10'] / m['m00'])
-                cy = int(m['m01'] / m['m00'])
-
-                error = cx - w_resized / 2
-                if error < closest_to_centre:
-                    closest_to_centre = error
-
-        if closest_to_centre != 1e10:
-            # Apply proportional velocity of the following magnitude:
-            homing_ang_vel = -float(closest_to_centre) / 100
-            self.robot.sequencer.begin_homing(0, homing_ang_vel)
-
-        # Show the mask
-        cv2.imshow("Green Object Detection", mask)
-        cv2.waitKey(3)
-'''

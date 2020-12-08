@@ -54,7 +54,6 @@ class BlueGreenDetector:
             if M['m00'] < 30:
                 continue
 
-            print(M['m00'])
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
 
@@ -110,7 +109,6 @@ class BlueGreenDetector:
             if M['m00'] < 30:
                 continue
 
-            print(M['m00'])
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
 
@@ -122,7 +120,6 @@ class BlueGreenDetector:
                 depth = frame[cy * 4][cx * 4]
 
                 if math.isnan(depth):
-                    rospy.loginfo('infinite depth')
                     continue
 
                 z = depth

@@ -1,23 +1,23 @@
-import rospy
-import random
-import numpy as np
 import math
+import numpy as np
+import random
 
+import rospy
 from geometry_msgs.msg import Twist
 
-from behaviours import *
-from sequencer import *
 from pose import Pose
-from areaofinterest import AreaOfInterestFinder
+
 
 class Behaviour:
     # Static variable
     velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+
     def __init__(self, name):
         self.name = name
 
     def act(self, robot, sequencer):
         print("Error: child class should override this")
+
 
 class Exploration(Behaviour):
     def __init__(self):
@@ -28,7 +28,7 @@ class Exploration(Behaviour):
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
-        if sequencer.cycles % sequencer.sequence_hz== 0:
+        if sequencer.cycles % sequencer.sequence_hz == 0:
             wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
                                          aoif.closest_cy / aoif.scale)
 
@@ -68,7 +68,7 @@ class Homing(Behaviour):
         dist_vec = [vec_to[0] - vec_from[0], vec_to[1] - vec_from[0]]
         dist = math.sqrt(dist_vec[0] ** 2 + dist_vec[1] ** 2)
 
-        if dist > 1.0: # It's too far so the robot needs to move towards the object as well as specifying a rotation
+        if dist > 1.0:  # It's too far so the robot needs to move towards the object as well as specifying a rotation
             norm = [dist_vec[0] / dist, dist_vec[1] / dist]
             target_dist = dist - 1.0
             self.target_pose = Pose(robot.pose.px + target_dist*norm[0], robot.pose.py + target_dist*norm[1], angle)
@@ -76,7 +76,7 @@ class Homing(Behaviour):
             self.target_pose = Pose(robot.pose.px, robot.pose.py, angle)
 
     def act(self, robot, sequencer):
-        i = 1
+        pass
         # TODO: Do something with move_base to move towards it
         # TODO: Check if we're sufficiently closed (angular & euclidean dist)
 
