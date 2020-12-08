@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import rospy
-from sensor_msgs.msg import Image
 import cv2, cv_bridge
 import numpy as np
 import math
@@ -8,7 +7,8 @@ import time
 import textdetect
 import depth
 
-
+from ars.msg import Detection
+from sensor_msgs.msg import Image
 
 def contrast(image):
     alpha = 3 # Simple contrast control
@@ -23,6 +23,7 @@ class TextSensor:
       self.bridge = cv_bridge.CvBridge()
       self.image_sub_text = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_text)
       self.td = textdetect.TextDetector()
+      self.detection_pub_text = rospy.Publisher('detection_text', Detection)
 
    def image_callback_text(self,msg):
        image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
@@ -52,6 +53,14 @@ class TextSensor:
                print(" 5 Box found")
                print("Object location:")
                print(x,y,z)
+
+               detection_msg = Detection()
+               detection_msg.id = 3
+               detection_msg.timestamp = timestamp
+               detection_msg.x = x
+               detection_msg.y = y
+               detection_msg.z = z
+               self.detection_pub_text.publish(detection_msg)
 
 
 rospy.init_node('TextSensor')

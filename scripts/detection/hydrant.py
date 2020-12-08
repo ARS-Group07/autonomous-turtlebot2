@@ -8,6 +8,7 @@ import depth
 
 from sensor_msgs.msg import Image
 from detection_paths import Paths
+from ars.msg import Detection
 
 CONFIDENCE_THRESHOLD=0.3
 LABELS = open(Paths.LABELS_FILE).read().strip().split("\n")
@@ -22,6 +23,7 @@ class HydrantDetector:
       self.bridge = cv_bridge.CvBridge()
       self.image_sub_firehydrant = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_firehydrant)
       self.net = cv2.dnn.readNetFromDarknet(Paths.CONFIG_FILE, Paths.WEIGHTS_FILE)
+      self.detection_pub_hydrant = rospy.Publisher('detection_hydrant', Detection)
 
    def image_callback_firehydrant(self, msg):      
       image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
@@ -91,6 +93,15 @@ class HydrantDetector:
                     y = -y 
                   print("Fire hydrant Location")
                   print(x,y,z)
+
+                  detection_msg = Detection()
+                  detection_msg.id = 1
+                  detection_msg.timestamp = timestamp
+                  detection_msg.x = x
+                  detection_msg.y = y
+                  detection_msg.z = z
+                  self.detection_pub_hydrant.publish(detection_msg)
+
               text = "{}: {:.4f}".format(LABELS[classIDs[i]], confidences[i])
               #cv2.putText(image, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX,0.5, color, 2)
       cv2.imshow("pred", image)

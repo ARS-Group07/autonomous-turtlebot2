@@ -7,12 +7,13 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import LaserScan
 from tf.transformations import euler_from_quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from ars.msg import Detection
 
 # Imports for faked object detection
-import cv2, cv_bridge
-import numpy as np
-from sensor_msgs.msg import Image
-from std_msgs.msg import String
+#import cv2, cv_bridge
+#import numpy as np
+#from sensor_msgs.msg import Image
+#from std_msgs.msg import String
 
 
 class Robot:
@@ -46,6 +47,12 @@ class Robot:
         else:
             rospy.Subscriber('odom', Odometry, self.get_odom_data)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
+
+        # Object detection
+        rospy.Subscriber('detection_green', Detection, self.object_detected_calback)
+        rospy.Subscriber('detection_hydrant', Detection, self.object_detected_calback)
+        rospy.Subscriber('detection_blue', Detection, self.object_detected_calback)
+        rospy.Subscriber('detection_text', Detection, self.object_detected_calback)
 
         # Create the fake object detection
         #self.fake_object_detection = FakeObjectDetection(self)
@@ -96,6 +103,9 @@ class Robot:
         # Update the current position for the robot within the idle tracker since AMCL only sends messages
         # when the robot moves
         self.idle_tracker.track(self.pose)
+
+    def object_detected_calback(self, msg):
+        rospy.loginfo("OBJECT DETECTED. ID: " + str(msg.id))
 
     def is_object_found(self, object_type):
         return self.objects_found.get(object_type)

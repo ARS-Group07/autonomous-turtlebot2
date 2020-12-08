@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 import rospy
-from sensor_msgs.msg import Image
 import cv2, cv_bridge
 import numpy as np
 import math
 import depth
 import time
+
+from sensor_msgs.msg import Image
+from ars.msg import Detection
 
 class Analyzer:
 #TODO separate subscribers to other classes
@@ -25,6 +27,9 @@ class BlueGreenDetector:
       self.bridge = cv_bridge.CvBridge()
       self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
       self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
+
+      self.detection_pub_green = rospy.Publisher('detection_green', Detection)
+      self.detection_pub_blue = rospy.Publisher('detection_blue', Detection)
 
    def image_callback_green(self,msg):
        image = self.bridge.imgmsg_to_cv2(msg,desired_encoding='bgr8')
@@ -66,7 +71,14 @@ class BlueGreenDetector:
                        x = -x
                    if(cy*4 > 540):
                        y = -y 
-                    
+
+                   detection_msg = Detection()
+                   detection_msg.id = 0
+                   detection_msg.timestamp = timestamp
+                   detection_msg.x = x
+                   detection_msg.y = y
+                   detection_msg.z = z
+                   self.detection_pub_green.publish(detection_msg)
                    print("Green Object Found")
                    print("Object Location :")
                    print(x,y,z)
@@ -130,6 +142,14 @@ class BlueGreenDetector:
     
                    if( y > 0.5 and M['m00'] >= 10 ):
                        print("Blue object found in high position(postbox)")
+                       detection_msg = Detection()
+                       detection_msg.id = 2
+                       detection_msg.timestamp = timestamp
+                       detection_msg.x = x
+                       detection_msg.y = y
+                       detection_msg.z = z
+                       self.detection_pub_blue.publish(detection_msg)
+
                    print("Object Location")
                    print(x,y,z)
            else:
@@ -137,7 +157,6 @@ class BlueGreenDetector:
                detection = False
 
 
-               
            cv2.circle(mask, (cx, cy), 5, 127, -1)
 
 
