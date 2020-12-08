@@ -1,4 +1,5 @@
 import rospy
+import random
 
 from geometry_msgs.msg import Twist
 
@@ -27,24 +28,27 @@ class Exploration(Behaviour):
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
+        if sequencer.cycles % sequencer.sequence_hz== 0:
+            wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
+                                         aoif.closest_cy / aoif.scale)
 
-        #rospy.loginfo('aoif furthest cx, cy: ' + str(robot.aoif.furthest_cx) + ', ' + str(robot.aoif.furthest_cy))
+            if self.last_goal_x == aoif.closest_cx and self.last_goal_y == aoif.closest_cy:
+                rospy.loginfo('Contour unchanged: randomizing slightly')
+                wx += round(random.random() / 2, 1) - 0.3
+                wy += round(random.random() / 2, 1) - 0.3
 
-        if sequencer.cycles % 5 == 0:
-            wx, wy = robot.grid.to_world(aoif.furthest_cx / aoif.scale,
-                                         aoif.furthest_cy / aoif.scale)
-            rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
-            self.last_goal_x = wx
-            self.last_goal_y = wy
-
+            self.last_goal_x = aoif.closest_cx
+            self.last_goal_y = aoif.closest_cy
             robot.send_nav_goal(wx, -wy)
+            rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
 
 
 class Homing(Behaviour):
-    def __init__(self, sequencer):
+    def __init__(self, sequencer, laser_angles):
         Behaviour.__init__(self, "Homing")
 
         self.sequencer = sequencer
+        self.laser_angles = laser_angles
         self.current_object_type = -1
         self.ang_vel = 0
 
@@ -53,11 +57,11 @@ class Homing(Behaviour):
             return
 
         # First check if we're sufficiently close to an object, in which case we'll either ignore homing /
-        laser_distances = [robot.last_laser_msg.ranges[-3:] + robot.last_laser_msg.ranges[0:3]]
+        laser_distances = [robot.last_laser_msg.ranges[i] for i in self.laser_angles]
         min_dist = min(laser_distances)
 
         twist = Twist()
-        if min_dist < 0.25:
+        if min_dist < 1.0:
             twist.linear.x = 0.1
             twist.angular.z = self.ang_vel
         else:

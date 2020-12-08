@@ -11,9 +11,10 @@ class Sequencer:
         self.cycles = 0
         self.status_window = StatusWindow(robot)
         self.current_behaviour = Exploration()
+        self.sequence_hz = 25
 
     def sequence(self, robot):
-        rate = rospy.Rate(5)
+        rate = rospy.Rate(self.sequence_hz)
 
         self.cycles = self.cycles + 1
         while not rospy.is_shutdown():
@@ -34,14 +35,14 @@ class Sequencer:
     def begin_homing(self, object_id, homing_ang_vel):
         self.robot.cancel_nav_goals()
 
-        if (self.robot.is_object_found(object_id)):
+        if self.robot.is_object_found(object_id):
             return
 
         """or isinstance(self.current_behaviour, ExplorationUnsticking)"""
         if isinstance(self.current_behaviour, Exploration):
             rospy.loginfo("[HOMING] Homing towards obj " + str(object_id))
 
-            self.current_behaviour = Homing(self)
+            self.current_behaviour = Homing(self, self.robot.laser_angles)
             self.current_behaviour.current_object_type = object_id
             self.current_behaviour.ang_vel = homing_ang_vel
         elif isinstance(self.current_behaviour, Homing):
