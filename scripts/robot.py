@@ -5,7 +5,7 @@ import rospy
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import LaserScan
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from move_base_msgs.msg import MoveBaseGoal
 from ars.msg import Detection
 
 
@@ -30,8 +30,8 @@ class Robot:
         # 1 - Red fire hydrant
         # 2 - Blue mailbox
         # 3 - White, numbered (5) cube
-        self.objects_found = {0: False, 1: False, 2: False, 3: False} # Whether it's been found
-        self.objects_seen = {0: 0, 1: 0, 2: 0, 3: 0}                  # How many times it's been seen / detected
+        self.objects_found = {0: False, 1: False, 2: False, 3: False}  # Whether it's been found
+        self.objects_seen = {0: 0, 1: 0, 2: 0, 3: 0}  # How many times it's been seen / detected
 
         self.last_laser_msg = None
         self.homing_vel = 0
@@ -84,7 +84,7 @@ class Robot:
         self.idle_tracker.track(self.pose)
 
     def object_detected_calback(self, msg):
-        rospy.loginfo("OBJECT DETECTED. ID: " + str(msg.id))
+        # rospy.loginfo("OBJECT DETECTED. ID: " + str(msg.id))
         self.objects_seen[msg.id] = self.objects_seen[msg.id] + 1
         self.sequencer.try_to_home(msg)
 
@@ -101,7 +101,7 @@ class Robot:
 
         self.objects_found[object_type] = True
 
-    def send_nav_goal(self, px, py, yaw = -1.0):
+    def send_nav_goal(self, px, py, yaw=-1.0):
         self.cancel_nav_goals()
 
         goal = MoveBaseGoal()
