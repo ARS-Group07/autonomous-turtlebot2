@@ -88,6 +88,11 @@ class HydrantDetector:
                         frame = np.asarray(depth_image)
 
                     depth = frame[cy][cx]
+
+                    if math.isinf(depth):
+                        rospy.loginfo('infinite depth')
+                        continue
+
                     z = depth
                     x = depth * math.tan(alpha)
                     y = depth * math.tan(beta)

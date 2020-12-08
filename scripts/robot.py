@@ -46,7 +46,7 @@ class Robot:
         rospy.Subscriber('detection_text', Detection, self.object_detected_calback)
 
         # Create the fake object detection
-        #self.fake_object_detection = FakeObjectDetection(self)
+        # self.fake_object_detection = FakeObjectDetection(self)
 
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
@@ -126,6 +126,7 @@ class Robot:
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()
 
+
 class IdleTracker():
     # idle_threshold is the maximum euclidean distance a robot can travel before it is no longer idle
     # poses_stored is how many of the last x poses to store when considering if the robot is idle
@@ -133,18 +134,18 @@ class IdleTracker():
         self.robot = robot
         self.idle_threshold = idle_threshold
         self.poses_stored = poses_stored
-        self.poses = [] # poses[poses_stored - 1] is the latest pose
+        self.poses = []  # poses[poses_stored - 1] is the latest pose
         self.idle = False
 
     def track(self, pose):
-        if (len(self.poses) == self.poses_stored):
+        if len(self.poses) == self.poses_stored:
             self.poses.pop(0)
 
         self.poses.append(Pose(pose.px, pose.py, pose.yaw))
         self.update_idle()
 
     def update_idle(self):
-        if (len(self.poses) != self.poses_stored): # Insufficient data to determine whether idle
+        if len(self.poses) != self.poses_stored:  # Insufficient data to determine whether idle
             self.idle = False
             return
 
@@ -159,6 +160,7 @@ class IdleTracker():
     def flush(self):
         self.poses = []
         self.idle = False
+
 
 '''
 class FakeObjectDetection:

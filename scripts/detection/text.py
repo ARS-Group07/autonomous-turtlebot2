@@ -49,6 +49,11 @@ class TextSensor:
             if depth_image is not None:
                 frame = np.asarray(depth_image)
                 depth = frame[yc][xc]
+
+                if math.isinf(depth):
+                    rospy.loginfo('infinite depth')
+                    return
+
                 z = depth
                 x = depth * math.tan(alpha)
                 y = depth * math.tan(beta)
