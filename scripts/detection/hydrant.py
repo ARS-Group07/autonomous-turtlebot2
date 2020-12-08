@@ -80,7 +80,6 @@ class HydrantDetector:
                 cy = y + h / 2
 
                 if LABELS[classIDs[i]] is LABELS[10]:
-                    print("Fire hydrant found")
                     alpha = np.deg2rad(abs((cx * 60 / 1920) - 30))
                     beta = np.deg2rad(abs((cy * 45 / 1080) - 22.5))
 
@@ -90,7 +89,6 @@ class HydrantDetector:
                     depth = frame[cy][cx]
 
                     if math.isnan(depth):
-                        rospy.loginfo('infinite depth')
                         continue
 
                     z = depth
@@ -101,8 +99,6 @@ class HydrantDetector:
                         x = -x
                     if cy > 540:
                         y = -y
-
-                    print("Object Location: x=" + str(x) + ', y=' + str(y) + ', z=' + str(z))
 
                     detection_msg = Detection()
                     detection_msg.id = 1

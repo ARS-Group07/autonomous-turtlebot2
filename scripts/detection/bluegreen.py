@@ -66,7 +66,6 @@ class BlueGreenDetector:
                 depth = frame[cy * 4][cx * 4]
 
                 if math.isnan(depth):
-                    rospy.loginfo('infinite depth')
                     continue
 
                 z = depth
@@ -86,8 +85,6 @@ class BlueGreenDetector:
                 detection_msg.z = z
 
                 self.detection_pub_green.publish(detection_msg)
-                print("Green Object Found")
-                print("Object Location: x=" + str(x) + ', y=' + str(y) + ', z=' + str(z))
 
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 
@@ -138,7 +135,6 @@ class BlueGreenDetector:
                     y = -y
 
                 if y > 0.5 and M['m00'] >= 10:
-                    print("Blue object found in high position(postbox)")
                     detection_msg = Detection()
                     detection_msg.id = 2
                     detection_msg.timestamp = timestamp
@@ -146,7 +142,6 @@ class BlueGreenDetector:
                     detection_msg.y = y
                     detection_msg.z = z
                     self.detection_pub_blue.publish(detection_msg)
-                    print("Object Location: x=" + str(x) + ', y=' + str(y) + ', z=' + str(z))
 
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 
