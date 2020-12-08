@@ -3,4 +3,4 @@
 *.weights
 *.names
 *.pb
-./src/
+/.idea/
