@@ -55,10 +55,11 @@ class Grid:
         unexplored_mask = np.where(self.grid == 0.5, 1, 0)
         unexplored_points = np.sum(unexplored_mask)
         # realistically < 200 is probably better but 1200 is demonstrating the effect
-        return unexplored_points < 1200
+        return unexplored_points < 200
 
     def reset_grid(self, map_arr):
         self.grid = np.copy(map_arr)
+
 
 class GridVisualiser:
     """ Visualiser class for the grid. """

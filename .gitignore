@@ -1,3 +1,6 @@
 *.pyc
-.idea/
-.idea/
+*.cfg
+*.weights
+*.names
+*.pb
+./src/

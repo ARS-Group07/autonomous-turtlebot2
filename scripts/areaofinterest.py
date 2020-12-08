@@ -9,7 +9,7 @@ class AreaOfInterestFinder:
         self.scale = scale
         cv2.namedWindow('Unexplored areas with centroids', 1)
 
-        self.furthest_dist, self.furthest_area, self.furthest_cx, self.furthest_cy = 0, -1, 200, 200
+        self.closest_dist, self.closest_area, self.closest_cx, self.closest_cy = 0, -1, 200, 200
 
     def get_grid_contours(self, robot_x, robot_y):
         image = self.grid.grid
@@ -21,9 +21,9 @@ class AreaOfInterestFinder:
         unexplored_mask = cv2.inRange(image, 0.499, 0.501)
 
         # find all discrete unexplored areas
-        _, contours, hierarchy = cv2.findContours(unexplored_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        contours, hierarchy = cv2.findContours(unexplored_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        self.furthest_dist = -1
+        self.closest_dist = 1e7
         for i, c in enumerate(contours):
             # don't include sub-contours ie. the holes in the white areas
             if hierarchy[0][i][3] != -1:
@@ -33,17 +33,17 @@ class AreaOfInterestFinder:
             area = m['m00']
 
             # don't include very small areas as areas of interest
-            if area < 25.:
+            if area < 200.:
                 continue
             cx = int(m['m10'] / m['m00'])
             cy = int(m['m01'] / m['m00'])
 
             dist = math.sqrt((cx - robot_x) ** 2 + (cy - robot_y) ** 2)
-            if dist > self.furthest_dist: # -> for furthest
-                self.furthest_area = area
-                self.furthest_dist = dist
-                self.furthest_cx = cx
-                self.furthest_cy = cy
+            if dist < self.closest_dist:
+                self.closest_area = area
+                self.closest_dist = dist
+                self.closest_cx = cx
+                self.closest_cy = cy
 
             # draw a circle on each discrete object; size of circle corresponds to area of contour
             # bigger contours are more saturated
@@ -53,10 +53,8 @@ class AreaOfInterestFinder:
             cv2.circle(display_image, (cx, cy), int((area ** 0.33) / 2), (18, 100, 220), -1)
 
         # the chosen area's circle will be brighter
-        if len(contours) > 0:
-            cv2.circle(display_image, (self.furthest_cx, self.furthest_cy),
-                       int((self.furthest_area ** 0.33) / 2), (18, 220, 220), -1)
-
+        cv2.circle(display_image, (self.closest_cx, self.closest_cy), int((self.closest_area ** 0.33) / 2),
+                   (18, 220, 220), -1)
         display_image = cv2.cvtColor(display_image, cv2.COLOR_HSV2BGR)
         cv2.imshow('Unexplored areas with centroids', display_image)
         cv2.waitKey(1)
