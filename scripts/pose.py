@@ -43,6 +43,9 @@ class Pose:
         # return angle difference
         return np.arccos(np.dot(front, other_front))
 
+    def dist(self, other_pose):
+        return math.sqrt((self.px - other_pose.px) ** 2 + (self.py - other_pose.py) ** 2)
+
     def get_random_yaw(self):
         # get random yaw to turn towards
         ang_dist = 0.

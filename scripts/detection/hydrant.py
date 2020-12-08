@@ -91,6 +91,7 @@ class HydrantDetector:
                     z = depth
                     x = depth * math.tan(alpha)
                     y = depth * math.tan(beta)
+
                     if cx < 960:
                         x = -x
                     if cy > 540:

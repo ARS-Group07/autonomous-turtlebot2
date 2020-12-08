@@ -1,6 +1,7 @@
 import rospy
 import random
 import numpy as np
+import math
 
 from geometry_msgs.msg import Twist
 
@@ -56,7 +57,7 @@ class Homing(Behaviour):
         self.current_object_type = detection_msg.id
 
         # Calculate the angle from the robot to the object
-        vec_to = [detection_msg.x, detection_msg.y]
+        vec_to = [robot.pose.x + detection_msg.x, robot.pose.y + detection_msg.y]
         vec_from = [robot.pose.x. self.robot.pose.y]
         unit_to = vec_to / np.linalg.norm(vec_to)
         unit_from = vec_from / np.linalg.norm(vec_from)
@@ -64,15 +65,15 @@ class Homing(Behaviour):
         angle = np.arccos(dot_product)
 
         # Determine the distance between the robot and the object
-        pose_to = Pose(detection_msg.x, detection_msg.y, 0)
-        dist = pose_to.dist(robot.pose)
+        dist_vec = [vec_to[0] - vec_from[0], vec_to[1] - vec_from[0]]
+        dist = math.sqrt(dist_vec[0] ** 2 + dist_vec[1] ** 2)
 
-        target_pose = None
-        if dist > 1.0: # It's too far so the robot needs to move towards the object
-            target_pose = Pose(detection_msg.x, detection_msg.y, angle)
+        if dist > 1.0: # It's too far so the robot needs to move towards the object as well as specifying a rotation
+            norm = [dist_vec[0] / dist, dist_vec[1] / dist]
+            target_dist = dist - 1.0
+            self.target_pose = Pose(robot.pose.x + target_dist*norm[0], robot.pose.y + target_dist*norm[1], angle)
         else: # It's close enough so all we need to do is specify the angle
-            target_pose = Pose(robot.x, robot.y, angle)
-        self.target_pose = target_pose
+            self.target_pose = Pose(robot.pose.x, robot.pose.y, angle)
 
     def act(self, robot, sequencer):
         i = 1
