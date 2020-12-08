@@ -65,6 +65,10 @@ class BlueGreenDetector:
                 frame = np.asarray(depth_image)
                 depth = frame[cy * 4][cx * 4]
 
+                if math.isinf(depth):
+                    rospy.loginfo('infinite depth')
+                    continue
+
                 z = depth
                 x = depth * math.tan(alpha)
                 y = depth * math.tan(beta)
@@ -119,6 +123,10 @@ class BlueGreenDetector:
             if depth_image is not None:
                 frame = np.asarray(depth_image)
                 depth = frame[cy * 4][cx * 4]
+
+                if math.isinf(depth):
+                    rospy.loginfo('infinite depth')
+                    continue
 
                 z = depth
                 x = depth * math.tan(alpha)
