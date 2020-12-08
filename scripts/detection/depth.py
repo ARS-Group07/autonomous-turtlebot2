@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 import rospy
 from sensor_msgs.msg import Image
 import cv2, cv_bridge

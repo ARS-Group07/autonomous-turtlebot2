@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 import rospy
 import cv2, cv_bridge
 import numpy as np
