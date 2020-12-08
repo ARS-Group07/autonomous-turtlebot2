@@ -9,12 +9,6 @@ from tf.transformations import euler_from_quaternion
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from ars.msg import Detection
 
-# Imports for faked object detection
-#import cv2, cv_bridge
-#import numpy as np
-#from sensor_msgs.msg import Image
-#from std_msgs.msg import String
-
 
 class Robot:
     def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, nav_client, map_arr,

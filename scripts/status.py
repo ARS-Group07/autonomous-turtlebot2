@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 from behaviours import *
 
+
 class StatusWindow:
     def __init__(self, robot):
         self.robot = robot
@@ -15,7 +16,7 @@ class StatusWindow:
         behaviour = ['Behaviour: ' + sequencer.current_behaviour.name]
         if isinstance(sequencer.current_behaviour, Exploration):
             behaviour = behaviour + ['  Towards: (' + str(sequencer.current_behaviour.last_goal_x) + ", "
-                                                    + str(sequencer.current_behaviour.last_goal_y) + ")"]
+                                     + str(sequencer.current_behaviour.last_goal_y) + ")"]
         behaviour = behaviour + ['Idle: ' + str(self.robot.idle_tracker.idle)]
 
         objects = ['Objects found:',
