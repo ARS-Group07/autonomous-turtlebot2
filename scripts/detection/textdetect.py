@@ -3,25 +3,28 @@ import numpy as np
 import argparse
 import time
 import cv2
-import pytesseract 
+import pytesseract
 
 from detection_paths import Paths
 from imutils.object_detection import non_max_suppression
 
+
 def contrast(image):
-    alpha = 3.0 # Simple contrast control
+    alpha = 3.0  # Simple contrast control
     beta = 70  # Simple brightness control
-    out = cv2.addWeighted( image, alpha, image, 0, beta)
+    out = cv2.addWeighted(image, alpha, image, 0, beta)
     return out
+
 
 class TextDetector:
     def __init__(self):
         self.flag = False
+
     def detect(self, img):
         confidence = 0.3
         width = 320
-        height = 320 
-        
+        height = 320
+
         image = img.copy()
         image = contrast(image)
 
@@ -34,13 +37,10 @@ class TextDetector:
         # resize the image and grab the new image dimensions
         image = cv2.resize(image, (width, height))
         (H, W) = image.shape[:2]
-        layerNames = [
-            "feature_fusion/Conv_7/Sigmoid",
-            "feature_fusion/concat_3"]
+        layerNames = ["feature_fusion/Conv_7/Sigmoid", "feature_fusion/concat_3"]
 
         net = cv2.dnn.readNet(Paths.TEXT_FILE)
-        blob = cv2.dnn.blobFromImage(image, 1.0, (W, H),
-                                    (123.68, 116.78, 103.94), swapRB=True, crop=False)
+        blob = cv2.dnn.blobFromImage(image, 1.0, (W, H), (123.68, 116.78, 103.94), swapRB=True, crop=False)
         start = time.time()
         net.setInput(blob)
         (scores, geometry) = net.forward(layerNames)
@@ -101,21 +101,22 @@ class TextDetector:
         # apply non-maxima suppression to suppress weak, overlapping bounding
         # boxes
         boxes = non_max_suppression(np.array(rects), probs=confidences)
-        center = (0,0)
+        center = (0, 0)
+
         # loop over the bounding boxes
         for (startX, startY, endX, endY) in boxes:
-            
-            #scale back to original
+
+            # scale back to original
             startX = int(startX * rW)
             startY = int(startY * rH)
             endX = int(endX * rW)
             endY = int(endY * rH)
-            
+
             # draw the bounding box on the image
             cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 2)
-            center = (int((startX + endX) /2),int((startY+ endY) /2) )
+            center = (int((startX + endX) / 2), int((startY + endY) / 2))
 
-            #crop detected area and run tesseract recognition
+            # crop detected area and run tesseract recognition
             crop_img = orig[startY:endY, startX:endX]
             custom_oem_psm_config = r'--psm 10'
             print("Reading result")
@@ -126,13 +127,11 @@ class TextDetector:
                     self.flag = True
 
         # show the output image
-        cv2.imshow("Text Detection", orig)
+        # cv2.imshow("Text Detection", orig)
+
         cv2.waitKey(3)
-        if(self.flag):
-            return (True, center)
+
+        if self.flag:
+            return True, center
         else:
-            return (False, (0,0))
-
-
-
-
+            return False, (0, 0)

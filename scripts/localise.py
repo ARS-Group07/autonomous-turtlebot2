@@ -33,8 +33,8 @@ class Localiser:
         # assuming Gaussian distribution this is confidence margin of around +-10cm in x and y directions
         # for theta this is around +-6 degrees once converted from radians
 
-        if x_var < 0.01 and y_var < 0.01 and theta_var < 0.01:
-            rospy.loginfo('AMCL CONFIDENCE ACHIEVED! x, y and theta variances < 0.01')
+        if x_var < 0.02 and y_var < 0.02 and theta_var < 0.02:
+            rospy.loginfo('AMCL CONFIDENCE ACHIEVED! x, y and theta variances < 0.02')
             self.localised = True
 
     def unsubscribe(self):
