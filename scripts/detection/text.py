@@ -40,7 +40,6 @@ class TextSensor:
         (xc, yc) = coord
 
         if flag:
-            print("success")
             print(coord)
 
             alpha = np.deg2rad(abs((xc * 59 / 1920) - 29.5))
