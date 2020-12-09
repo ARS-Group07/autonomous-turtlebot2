@@ -1,10 +1,12 @@
 import math
 import numpy as np
 import random
+from scipy.spatial.transform import Rotation as R
 
 
 class Pose:
     """ Class representing pose information. Functions for calculating linear, angular distance between poses. """
+
     def __init__(self, x=0., y=0., yaw=0.):
         self.px = x
         self.py = y
@@ -57,3 +59,19 @@ class Pose:
             ang_dist = self.ang_dist(Pose(0., 0., yaw))
 
         return yaw
+
+    def locate(self, pose2):
+        if pose2.px > 0:
+            pose2.yaw = -pose2.yaw
+        vec = [pose2.px, pose2.py, 0]
+        newyaw = self.yaw + pose2.yaw
+        rotation_radians = self.yaw
+        rotation_axis = np.array([0, 0, 1])
+        rotation_vector = rotation_radians * rotation_axis
+        rotation = R.from_rotvec(rotation_vector)
+        rotated_vec = rotation.apply(vec)
+
+        x = self.px + rotated_vec[0]
+        y = self.py + rotated_vec[1]
+
+        return Pose(x, y, newyaw)

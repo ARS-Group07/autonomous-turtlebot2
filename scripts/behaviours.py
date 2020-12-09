@@ -29,8 +29,7 @@ class Exploration(Behaviour):
     def act(self, robot, sequencer):
         aoif = robot.aoif
         if sequencer.cycles % sequencer.sequence_hz == 0:
-            wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale,
-                                         aoif.closest_cy / aoif.scale)
+            wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale, aoif.closest_cy / aoif.scale)
 
             if self.last_goal_x == aoif.closest_cx and self.last_goal_y == aoif.closest_cy:
                 rospy.loginfo('Contour unchanged: randomizing slightly (cycles=' + str(sequencer.cycles) + ')')
@@ -57,7 +56,7 @@ class Homing(Behaviour):
 
     def set_target(self, robot, detection_msg):
         self.current_object_type = detection_msg.id
-        self.target_pose = Pose(robot.pose.px + detection_msg.x, robot.pose.py + detection_msg.y, robot.pose.yaw)
+        self.target_pose = Pose(detection_msg.x, detection_msg.y, detection_msg.z)
 
         '''# Calculate the angle from the robot to the object
         vec_to = [robot.pose.px + detection_msg.x, robot.pose.py + detection_msg.y]
@@ -82,18 +81,21 @@ class Homing(Behaviour):
     def act(self, robot, sequencer):
         # TODO: Do something with move_base to move towards it
         # TODO: Check if we're sufficiently closed (angular & euclidean dist)
-        if robot.pose == None or self.target_pose == None:
+        if robot.pose is None or self.target_pose is None:
             return
 
             # Firstly check if we're close enough
         if robot.pose.dist(self.target_pose) < 0.25:  # TODO - Check if its been idle for a while?
             # Check if the angular distance is sufficient: is it looking at the object?
             if robot.pose.ang_dist(self.target_pose) < 0.2:
+                rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
+                rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
+                rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
                 robot.cancel_nav_goals()
                 self.finished(robot)
                 return
 
-        if self.target_pose.px != self.last_goal_x and self.target_pose.py != self.last_goal_y:
+        if sequencer.cycles % sequencer.sequence_hz == 0:
             self.last_goal_x = self.target_pose.px
             self.last_goal_y = self.target_pose.py
             robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)

@@ -1,5 +1,4 @@
 #!/usr/bin/env python2.7
-import math
 import numpy as np
 import time
 
@@ -11,6 +10,10 @@ from sensor_msgs.msg import Image
 
 import depth
 from detection_paths import Paths
+from detect_utils import get_detection_message
+from pose import Pose
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from tf.transformations import euler_from_quaternion
 
 CONFIDENCE_THRESHOLD = 0.3
 LABELS = open(Paths.LABELS_FILE).read().strip().split("\n")
@@ -25,7 +28,9 @@ class HydrantDetector:
         self.bridge = cv_bridge.CvBridge()
         self.net = cv2.dnn.readNetFromDarknet(Paths.CONFIG_FILE, Paths.WEIGHTS_FILE)
         self.image_sub_fire_hydrant = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_fire_hydrant)
+        self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
         self.detection_pub_hydrant = rospy.Publisher('detection_hydrant', Detection)
+        self.pose = Pose()
 
     def image_callback_fire_hydrant(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -34,7 +39,6 @@ class HydrantDetector:
 
         if self.depthSensor.depth_img is not None:
             depth_image = self.depthSensor.depth_img.copy()
-        timestamp = time.time()
 
         ln = self.net.getLayerNames()
         ln = [ln[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
@@ -45,7 +49,7 @@ class HydrantDetector:
         start = time.time()
         layer_outputs = self.net.forward(ln)
         end = time.time()
-        #print("[INFO] YOLO took {:.6f} seconds".format(end - start))
+        print("[INFO] YOLO took {:.6f} seconds".format(end - start))
 
         boxes = []
         confidences = []
@@ -80,36 +84,26 @@ class HydrantDetector:
                 cy = y + h / 2
 
                 if LABELS[classIDs[i]] is LABELS[10]:
-                    alpha = np.deg2rad(abs((cx * 60 / 1920) - 30))
-                    beta = np.deg2rad(abs((cy * 45 / 1080) - 22.5))
 
-                    if depth_image is not None:
-                        frame = np.asarray(depth_image)
+                    # get message containing object's absolute world co-ordinates from the current pose, cx,
+                    # cy and depth image
+                    detection_msg = get_detection_message(self.pose, cx, cy, depth_image, obj=1)
 
-                    depth = frame[cy][cx]
-
-                    if math.isnan(depth):
-                        continue
-
-                    z = depth
-                    x = depth * math.tan(alpha)
-                    y = depth * math.tan(beta)
-
-                    if cx < 960:
-                        x = -x
-                    if cy > 540:
-                        y = -y
-
-                    detection_msg = Detection()
-                    detection_msg.id = 1
-                    detection_msg.timestamp = timestamp
-                    detection_msg.x = x
-                    detection_msg.y = y
-                    detection_msg.z = z
-                    self.detection_pub_hydrant.publish(detection_msg)
+                    if detection_msg:
+                        self.detection_pub_hydrant.publish(detection_msg)
 
         # cv2.imshow("pred", image)
         cv2.waitKey(3)
+
+    def get_amcl_data(self, msg):
+        """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
+        quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
+                       msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
+        (_, _, yaw) = euler_from_quaternion(quarternion)
+        px = msg.pose.pose.position.x
+        py = msg.pose.pose.position.y
+
+        self.pose.update_pose(px, py, yaw)
 
 
 rospy.init_node('HydrantDetector')

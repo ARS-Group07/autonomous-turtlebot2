@@ -17,7 +17,6 @@ class Sequencer:
         self.cycles = self.cycles + 1
         while not rospy.is_shutdown():
             self.cycles += 1
-            # rospy.loginfo("Behaviour: " + self.current_behaviour.name)
             self.current_behaviour.act(robot, self)
 
             if self.cycles % 10 == 0:
@@ -27,13 +26,11 @@ class Sequencer:
 
     # Call of this function may come from various threads (i.e. topics from other nodes)
     def try_to_home(self, detection_msg):
-        self.robot.cancel_nav_goals()
-
-        # We've already
         if self.robot.is_object_found(detection_msg.id):
             return
 
         if isinstance(self.current_behaviour, Exploration):
+            self.robot.cancel_nav_goals()
             rospy.loginfo("[HOMING] Homing towards obj " + str(detection_msg.id))
 
             self.current_behaviour = Homing(self, self.robot.laser_angles)
