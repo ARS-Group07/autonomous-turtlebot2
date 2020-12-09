@@ -14,7 +14,6 @@ from grids import Grid, GridVisualiser
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
 
-
 def localise(laser_angles):
     _ = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
     rospy.loginfo('Got AMCL message, starting robot localisation ... ')

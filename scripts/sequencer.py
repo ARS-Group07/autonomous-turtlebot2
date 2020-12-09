@@ -1,7 +1,7 @@
+#!/usr/bin/env python2.7
 import rospy
 from behaviours import Exploration, Homing
 from status import StatusWindow
-
 
 class Sequencer:
     def __init__(self, robot):

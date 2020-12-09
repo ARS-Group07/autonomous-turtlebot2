@@ -1,7 +1,7 @@
+#!/usr/bin/env python2.7
 import rospy
 import cv2
 import numpy as np
-
 
 class Grid:
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 from robot import Robot
 import cv2
 import numpy as np

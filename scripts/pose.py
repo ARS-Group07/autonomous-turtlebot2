@@ -1,8 +1,8 @@
+#!/usr/bin/env python2.7
 import math
 import numpy as np
 import random
 from scipy.spatial.transform import Rotation as R
-
 
 class Pose:
     """ Class representing pose information. Functions for calculating linear, angular distance between poses. """

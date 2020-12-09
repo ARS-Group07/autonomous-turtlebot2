@@ -1,9 +1,9 @@
+#!/usr/bin/env python2.7
 import numpy as np
 import math
 import time
 from ars.msg import Detection
 from pose import Pose
-
 
 def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
     """ Takes in information from sensors and forms an absolute world location of the detected object, and creates a

@@ -1,7 +1,7 @@
+#!/usr/bin/env python2.7
 import cv2
 import numpy as np
 import math
-
 
 class AreaOfInterestFinder:
     def __init__(self, grid, scale):
