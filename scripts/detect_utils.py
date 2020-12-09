@@ -13,7 +13,7 @@ def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
         frame = np.asarray(depth_image)
         depth = frame[cy][cx]
 
-        alpha = np.deg2rad(abs((cx * 4 * 60 / 1920) - 30))
+        alpha = np.deg2rad(abs((cx * 60 / 1920) - 30))
 
         if math.isnan(depth):
             return False
@@ -21,10 +21,17 @@ def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
         x = depth * math.tan(alpha)
         z = depth
 
-        if cx * 4 < 960:
+        if cx < 960:
             x = -x
 
-        pose2 = Pose(z, x, alpha)
+        if obj == 2:
+            # check if the object is at high enough point for blue things (mailbox)
+            beta = np.deg2rad(abs((cy * 45 / 1080) - 22.5))
+            y = depth * math.tan(beta)
+            if y < 1.0:
+                return False
+
+        pose2 = Pose(x, z, alpha)
         goal_pose = original_pose.locate(pose2)
 
         detection_msg = Detection()

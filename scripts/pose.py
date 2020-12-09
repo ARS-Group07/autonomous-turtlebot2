@@ -64,8 +64,10 @@ class Pose:
         if pose2.px > 0:
             pose2.yaw = -pose2.yaw
         vec = [pose2.px, pose2.py, 0]
-        newyaw = self.yaw + pose2.yaw
-        rotation_radians = self.yaw
+
+        newyaw = self.yaw + pose2.yaw - (math.pi / 2)
+        rotation_radians = self.yaw - (math.pi / 2)
+
         rotation_axis = np.array([0, 0, 1])
         rotation_vector = rotation_radians * rotation_axis
         rotation = R.from_rotvec(rotation_vector)
