@@ -1,6 +1,4 @@
 #!/usr/bin/env python2.7
-import math
-import numpy as np
 import time
 
 import cv2
@@ -10,6 +8,10 @@ from ars.msg import Detection
 from sensor_msgs.msg import Image
 
 import depth
+from detect_utils import get_detection_message
+from pose import Pose
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from tf.transformations import euler_from_quaternion
 
 
 class Analyzer:
@@ -31,9 +33,11 @@ class BlueGreenDetector:
         self.bridge = cv_bridge.CvBridge()
         self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
         self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
+        self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
 
         self.detection_pub_green = rospy.Publisher('detection_green', Detection)
         self.detection_pub_blue = rospy.Publisher('detection_blue', Detection)
+        self.pose = Pose()
 
     def image_callback_green(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -41,7 +45,6 @@ class BlueGreenDetector:
         depth_image = None
         if self.depthSensor.depth_img is not None:
             depth_image = self.depthSensor.depth_img.copy()
-        timestamp = time.time()
 
         image_resized = cv2.resize(image, (W / 4, H / 4))
         hsv = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
@@ -57,34 +60,11 @@ class BlueGreenDetector:
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
 
-            alpha = np.deg2rad(abs((cx * 4 * 60 / 1920) - 30))
-            beta = np.deg2rad(abs((cy * 4 * 45 / 1080) - 22.5))
+            # get message containing object's absolute world co-ordinates from the current pose, cx, cy and depth image
+            detection_msg = get_detection_message(self.pose, cx * 4, cy * 4, depth_image, obj=0)
 
-            if depth_image is not None:
-                frame = np.asarray(depth_image)
-                depth = frame[cy * 4][cx * 4]
-
-                if math.isnan(depth):
-                    continue
-
-                z = depth
-                x = depth * math.tan(alpha)
-                y = depth * math.tan(beta)
-
-                if cx * 4 < 960:
-                    x = -x
-                if cy * 4 > 540:
-                    y = -y
-
-                detection_msg = Detection()
-                detection_msg.id = 0
-                detection_msg.timestamp = timestamp
-                detection_msg.x = x
-                detection_msg.y = y
-                detection_msg.z = z
-
+            if detection_msg:
                 self.detection_pub_green.publish(detection_msg)
-                rospy.loginfo('Published green box location as x=' + str(x) + ', y=' + str(y) + ', z=' + str(z))
 
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 
@@ -113,38 +93,26 @@ class BlueGreenDetector:
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
 
-            alpha = np.deg2rad(abs((cx * 4 * 60 / 1920) - 30))
-            beta = np.deg2rad(abs((cy * 4 * 45 / 1080) - 22.5))
+            # get message containing object's absolute world co-ordinates from the current pose, cx, cy and depth image
+            detection_msg = get_detection_message(self.pose, cx * 4, cy * 4, depth_image, obj=2)
 
-            if depth_image is not None:
-                frame = np.asarray(depth_image)
-                depth = frame[cy * 4][cx * 4]
-
-                if math.isnan(depth):
-                    continue
-
-                z = depth
-                x = depth * math.tan(alpha)
-                y = depth * math.tan(beta)
-
-                if cx * 4 < 960:
-                    x = -x
-                if cy * 4 > 540:
-                    y = -y
-
-                if y > 0.5 and M['m00'] >= 10:
-                    detection_msg = Detection()
-                    detection_msg.id = 2
-                    detection_msg.timestamp = timestamp
-                    detection_msg.x = x
-                    detection_msg.y = y
-                    detection_msg.z = z
-                    self.detection_pub_blue.publish(detection_msg)
+            if detection_msg:
+                self.detection_pub_blue.publish(detection_msg)
 
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 
         # cv2.imshow("masked2", mask)
         cv2.waitKey(3)
+
+    def get_amcl_data(self, msg):
+        """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
+        quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
+                       msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
+        (_, _, yaw) = euler_from_quaternion(quarternion)
+        px = msg.pose.pose.position.x
+        py = msg.pose.pose.position.y
+
+        self.pose.update_pose(px, py, yaw)
 
 
 rospy.init_node('BlueGreenDetector')

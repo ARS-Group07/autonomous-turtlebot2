@@ -46,7 +46,7 @@ class TextDetector:
         (scores, geometry) = net.forward(layerNames)
         end = time.time()
 
-        #print("[INFO] text detection took {:.6f} seconds".format(end - start))
+        print("[INFO] text detection took {:.6f} seconds".format(end - start))
 
         (numRows, numCols) = scores.shape[2:4]
 

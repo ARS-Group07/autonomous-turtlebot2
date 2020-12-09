@@ -1,16 +1,17 @@
 #!/usr/bin/env python2.7
-import math
-import numpy as np
-import time
 
 import cv2
 import cv_bridge
 import rospy
 from ars.msg import Detection
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import Image
+from tf.transformations import euler_from_quaternion
 
 import depth
 import textdetect
+from detect_utils import get_detection_message
+from pose import Pose
 
 
 def contrast(image):
@@ -28,6 +29,8 @@ class TextSensor:
         self.image_sub_text = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_text)
         self.td = textdetect.TextDetector()
         self.detection_pub_text = rospy.Publisher('detection_text', Detection)
+        self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
+        self.pose = Pose()
 
     def image_callback_text(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -35,42 +38,29 @@ class TextSensor:
         if self.depthSensor.depth_img is not None:
             depth_image = self.depthSensor.depth_img.copy()
 
-        timestamp = time.time()
         (flag, coord) = self.td.detect(image)
-        (xc, yc) = coord
+        cx, cy = coord
 
+        # if object has been detected
         if flag:
-            print(coord)
 
-            alpha = np.deg2rad(abs((xc * 59 / 1920) - 29.5))
-            beta = np.deg2rad(abs((yc * 46 / 1080) - 23))
+            # get message containing object's absolute world co-ordinates from the current pose, cx,
+            # cy and depth image
+            detection_msg = get_detection_message(self.pose, cx, cy, depth_image, obj=3)
 
-            if depth_image is not None:
-                frame = np.asarray(depth_image)
-                depth = frame[yc][xc]
-
-                if math.isnan(depth):
-                    return
-
-                z = depth
-                x = depth * math.tan(alpha)
-                y = depth * math.tan(beta)
-
-                if xc < 960:
-                    x = -x
-                if yc > 540:
-                    y = -y
-
-                print("5 Box found")
-                print("Object Location: x=" + str(x) + ', y=' + str(y) + ', z=' + str(z))
-
-                detection_msg = Detection()
-                detection_msg.id = 3
-                detection_msg.timestamp = timestamp
-                detection_msg.x = x
-                detection_msg.y = y
-                detection_msg.z = z
+            if detection_msg:
                 self.detection_pub_text.publish(detection_msg)
+
+    def get_amcl_data(self, msg):
+        """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
+        quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
+                       msg.pose.pose.orientation.z, msg.pose.pose.orientation.w]
+        (_, _, yaw) = euler_from_quaternion(quarternion)
+        px = msg.pose.pose.position.x
+        py = msg.pose.pose.position.y
+
+        self.pose.update_pose(px, py, yaw)
+
 
 rospy.init_node('TextSensor')
 analyzer = TextSensor()
