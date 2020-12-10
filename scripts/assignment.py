@@ -6,33 +6,36 @@ import actionlib
 
 from move_base_msgs.msg import MoveBaseAction
 from robot import Robot
-from localise import Localiser, Wanderer
+from localise import Wanderer
 from areaofinterest import AreaOfInterestFinder
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sequencer import Sequencer
 from grids import Grid, GridVisualiser
 from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
+from detect_utils import AMCLConfidenceChecker
 
+def on_amcl_confidence_achieved():
+    global localised
+    localised = True
 
 def localise(laser_angles):
     _ = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
     rospy.loginfo('Got AMCL message, starting robot localisation ... ')
 
-    localiser = Localiser()
-    wanderer = Wanderer(laser_angles)
+    confidence_checker = AMCLConfidenceChecker('Wanderer', on_amcl_confidence_achieved)
+    confidence_checker.listen_for_confidence()
 
+    wanderer = Wanderer(laser_angles)
     r = rospy.Rate(15)
-    while not localiser.localised:
+    global localised
+    while not localised:
         wanderer.move()
         r.sleep()
-    rospy.loginfo('ROBOT LOCALISED')
 
     # robot now localised so kill those subscribers - no longer needed
-    localiser.unsubscribe()
     wanderer.unsubscribe()
     rospy.loginfo('Killed localisation and wandering behaviours - initialising full robot functionality ... ')
-
 
 if __name__ == '__main__':
     try:
@@ -58,6 +61,8 @@ if __name__ == '__main__':
         laser_angles = list(range(-int(fov / 2.), 0, laser_density)) + list(range(0, int(fov / 2.), laser_density))
 
         # Localise ourself using Monte Carlo
+        global localised
+        localised = False
         localise(laser_angles)
         # once localised, continue to the remainder of the code ...
 

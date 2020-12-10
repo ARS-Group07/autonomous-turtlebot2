@@ -10,9 +10,8 @@ from tf.transformations import euler_from_quaternion
 
 import depth
 import textdetect
-from detect_utils import get_detection_message
+from detect_utils import get_detection_message, AMCLConfidenceChecker
 from pose import Pose
-
 
 def contrast(image):
     alpha = 3  # Simple contrast control
@@ -20,17 +19,20 @@ def contrast(image):
     out = cv2.addWeighted(image, alpha, image, 0, beta)
     return out
 
-
 class TextSensor:
-    # TODO separate subscribers to other classes
     def __init__(self):
+        # Listen for confidence before we start detecting
+        confidence_checker = AMCLConfidenceChecker('Text Detection', self.on_amcl_confidence_achieved)
+        confidence_checker.listen_for_confidence()
+
+    def on_amcl_confidence_achieved(self):
         self.depthSensor = depth.DepthSensor()
         self.bridge = cv_bridge.CvBridge()
+        self.pose = Pose()
         self.image_sub_text = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_text)
         self.td = textdetect.TextDetector()
         self.detection_pub_text = rospy.Publisher('detection_text', Detection)
         self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
-        self.pose = Pose()
 
     def image_callback_text(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')

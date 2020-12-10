@@ -2,7 +2,6 @@ import math
 import cv2
 import numpy as np
 
-
 def get_fov(msg):
     """ Loads CameraInfo message and returns horizontal field of view angle. """
     focal_length = msg.K[0]
@@ -13,7 +12,6 @@ def get_fov(msg):
 
     # return field of view in degrees
     return round(fov * 180 / math.pi)
-
 
 def create_map_array(map_data, map_meta, grid_resolution):
     """ On startup, get obstacle data from occupancy map and fill in the walls on our grid. """

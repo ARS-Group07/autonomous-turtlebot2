@@ -84,7 +84,7 @@ class Robot:
         self.idle_tracker.track(self.pose)
 
     def object_detected_calback(self, msg):
-        rospy.loginfo("Detected (" + str(msg.id) + "). Location: (" + str(msg.x) + ", " + str(msg.y) + ")")
+        #rospy.loginfo("Detected (" + str(msg.id) + "). Location: (" + str(msg.x) + ", " + str(msg.y) + ")")
         self.objects_seen[msg.id] = self.objects_seen[msg.id] + 1
         self.sequencer.try_to_home(msg)
 

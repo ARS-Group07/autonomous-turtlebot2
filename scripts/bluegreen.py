@@ -11,7 +11,7 @@ from sensor_msgs.msg import Image
 from tf.transformations import euler_from_quaternion
 
 import depth
-from detect_utils import get_detection_message
+from detect_utils import get_detection_message, AMCLConfidenceChecker
 from pose import Pose
 
 
@@ -27,18 +27,23 @@ class Analyzer:
         self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
         self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
 
-
 class BlueGreenDetector:
     def __init__(self):
+        # Listen for confidence before we start detecting
+        confidence_checker = AMCLConfidenceChecker('Blue/Green Detection', self.on_amcl_confidence_achieved)
+        confidence_checker.listen_for_confidence()
+
+    def on_amcl_confidence_achieved(self):
         self.depthSensor = depth.DepthSensor()
         self.bridge = cv_bridge.CvBridge()
+        self.pose = Pose()
+
         self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
         self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
         self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
 
         self.detection_pub_green = rospy.Publisher('detection_green', Detection)
         self.detection_pub_blue = rospy.Publisher('detection_blue', Detection)
-        self.pose = Pose()
 
     def image_callback_green(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
