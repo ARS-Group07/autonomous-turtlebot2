@@ -84,15 +84,14 @@ class Homing(Behaviour):
             return
 
             # Firstly check if we're close enough
-        if robot.pose.dist(self.target_pose) < 0.25:  # TODO - Check if its been idle for a while?
+        if robot.pose.dist(self.target_pose) < 1.0:  # TODO - Check if its been idle for a while?
             # Check if the angular distance is sufficient: is it looking at the object?
-            if robot.pose.ang_dist(self.target_pose) < 0.2:
-                rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
-                rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
-                rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
-                robot.cancel_nav_goals()
-                self.finished(robot)
-                return
+            rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
+            rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
+            rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
+            robot.cancel_nav_goals()
+            self.finished(robot)
+            return
 
         if sequencer.cycles % sequencer.sequence_hz == 0:
             self.last_goal_x = self.target_pose.px

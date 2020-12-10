@@ -10,7 +10,7 @@ from sensor_msgs.msg import Image
 
 import depth
 from detection_paths import Paths
-from detect_utils import get_detection_message
+from detect_utils import get_detection_message, AMCLConfidenceChecker
 from pose import Pose
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from tf.transformations import euler_from_quaternion
@@ -24,13 +24,18 @@ COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
 
 class HydrantDetector:
     def __init__(self):
+        # Listen for confidence before we start detecting
+        confidence_checker = AMCLConfidenceChecker('Hydrant Detection', self.on_amcl_confidence_achieved)
+        confidence_checker.listen_for_confidence()
+
+    def on_amcl_confidence_achieved(self):
         self.depthSensor = depth.DepthSensor()
         self.bridge = cv_bridge.CvBridge()
+        self.pose = Pose()
         self.net = cv2.dnn.readNetFromDarknet(Paths.CONFIG_FILE, Paths.WEIGHTS_FILE)
         self.image_sub_fire_hydrant = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_fire_hydrant)
         self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
         self.detection_pub_hydrant = rospy.Publisher('detection_hydrant', Detection)
-        self.pose = Pose()
 
     def image_callback_fire_hydrant(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
