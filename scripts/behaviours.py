@@ -33,7 +33,7 @@ class Exploration(Behaviour):
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
-        if sequencer.cycles % sequencer.sequence_hz == 0:
+        if (sequencer.cycles % sequencer.sequence_hz * 2) == 0:
             wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale, aoif.closest_cy / aoif.scale)
 
             if self.last_goal_gx == aoif.closest_cx and self.last_goal_gy == aoif.closest_cy:
@@ -47,7 +47,7 @@ class Exploration(Behaviour):
             # Set the last goal (world coords)
             self.last_goal_wx = wx
             self.last_goal_wy = wy
-            robot.send_nav_goal(wx, -wy)
+            robot.send_nav_goal(wx, -wy - 0.5)
             rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
 
 
@@ -81,7 +81,7 @@ class Homing(Behaviour):
             self.finished(robot)
             return
 
-        if sequencer.cycles % sequencer.sequence_hz == 0:
+        if (sequencer.cycles % sequencer.sequence_hz * 2) == 0:
             self.last_goal_x = self.target_pose.px
             self.last_goal_y = self.target_pose.py
             robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)

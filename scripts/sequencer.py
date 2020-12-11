@@ -52,4 +52,3 @@ class Sequencer:
         else:
             rospy.loginfo("Saw object while homing. Homing towards object " + str(object_id))
             self.current_behaviour.set_target(object_id, position[0], position[1], 0)
-
