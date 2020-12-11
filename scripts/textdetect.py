@@ -117,7 +117,7 @@ class TextDetector:
             center = (int((startX + endX) / 2), int((startY + endY) / 2))
 
             # crop detected area and run tesseract recognition
-            crop_img = orig[startY:endY, startX:endX]
+            crop_img = orig[startY + 1:endY - 1, startX + 1:endX - 1]
             custom_oem_psm_config = r'--psm 10'
             print("Reading result")
             text = pytesseract.image_to_string(crop_img, config=custom_oem_psm_config)
