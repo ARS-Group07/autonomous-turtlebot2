@@ -2,17 +2,24 @@
 from robot import Robot
 import cv2
 import numpy as np
+import time
 from behaviours import *
 
-
 class StatusWindow:
-    def __init__(self, robot):
+    def __init__(self, robot, time_started):
         self.robot = robot
+        self.time_started = time_started
         cv2.namedWindow('Status', 1)
 
+    def get_time_elapsed(self):
+        now = time.time()
+        diff = round(now - self.time_started, 2)
+        return str(str(diff) + " seconds")
+
     def update(self, cycle_count):
-        image = np.ones([600, 600, 3]) * 255
+        image = np.ones([750, 600, 3]) * 255
         sequencer = self.robot.sequencer
+        elapsed = ['Elapsed: ' + self.get_time_elapsed()]
         cycles = ['Cycles: ' + str(cycle_count)]
         odom = ['X: ' + str(round(self.robot.pose.px, 2)), 'Y: ' + str(round(self.robot.pose.py, 2))]
         behaviour = ['Behaviour: ' + sequencer.current_behaviour.name]
@@ -53,7 +60,7 @@ class StatusWindow:
 
         offset = 30
         x, y = 10, 30
-        for idx, lbl in enumerate(cycles + odom + behaviour + objects):
+        for idx, lbl in enumerate(elapsed + cycles + odom + behaviour + objects):
             cv2.putText(image, str(lbl), (x, y + offset * idx), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 
         cv2.imshow("Status", image)
