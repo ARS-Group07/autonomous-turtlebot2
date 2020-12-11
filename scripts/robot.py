@@ -40,10 +40,10 @@ class Robot:
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
 
         # Object detection
-        rospy.Subscriber('detection_green', Detection, self.object_detected_calback)
-        rospy.Subscriber('detection_hydrant', Detection, self.object_detected_calback)
-        rospy.Subscriber('detection_blue', Detection, self.object_detected_calback)
-        rospy.Subscriber('detection_text', Detection, self.object_detected_calback)
+        rospy.Subscriber('detection_green', Detection, self.object_detected_callback)
+        rospy.Subscriber('detection_hydrant', Detection, self.object_detected_callback)
+        rospy.Subscriber('detection_blue', Detection, self.object_detected_callback)
+        rospy.Subscriber('detection_text', Detection, self.object_detected_callback)
 
         # Create the fake object detection
         # self.fake_object_detection = FakeObjectDetection(self)
@@ -83,8 +83,8 @@ class Robot:
         # when the robot moves
         self.idle_tracker.track(self.pose)
 
-    def object_detected_calback(self, msg):
-        #rospy.loginfo("Detected (" + str(msg.id) + "). Location: (" + str(msg.x) + ", " + str(msg.y) + ")")
+    def object_detected_callback(self, msg):
+        # rospy.loginfo("Detected (" + str(msg.id) + "). Location: (" + str(msg.x) + ", " + str(msg.y) + ")")
         self.seen_store.on_seen(msg.id, msg.x, msg.y)
         self.sequencer.try_to_home(msg)
 
@@ -94,7 +94,7 @@ class Robot:
 
     # Find the next object to route to if an object was seen while homing towards another object
     # Two return value cases:
-# a) (-1, None):                      We haven't seen an object that we've not already found
+    # a) (-1, None):                      We haven't seen an object that we've not already found
     # b) (object_id, [x_pos, y_pos]): We've seen an object that we've not already found
     def get_seen_unfound_object_position(self):
         for object_id in range(0, 4):
@@ -102,7 +102,7 @@ class Robot:
                 if self.get_times_seen(object_id) > 0:
                     return object_id, self.seen_store.get_average_location(object_id)
 
-        return -1, None # IF THERE IS NO SEEN, UNFOUND OBJECT
+        return -1, None  # IF THERE IS NO SEEN, UNFOUND OBJECT
 
     # Check whether an object has been 'found' (this means we've seen it and homed towards it)
     def is_object_found(self, object_id):
@@ -175,12 +175,13 @@ class IdleTracker:
         self.poses = []
         self.idle = False
 
+
 # Stores where objects have been seen so we can easily come back to them when exploring
 class SeenObjectStore:
     def __init__(self):
         self.times_seen = {0: 0, 1: 0, 2: 0, 3: 0}  # How many times it's been seen / detected
 
-        self.unseen = 0 # The starting coordinate(s) for an unseen object
+        self.unseen = 0  # The starting coordinate(s) for an unseen object
         self.positions = {0: [self.unseen, self.unseen], 1: [self.unseen, self.unseen],
                           2: [self.unseen, self.unseen], 3: [self.unseen, self.unseen]}
 
