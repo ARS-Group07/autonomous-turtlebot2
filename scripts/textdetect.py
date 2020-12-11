@@ -1,12 +1,12 @@
 #!/usr/bin/env python2.7
 import numpy as np
-import argparse
 import time
+
 import cv2
 import pytesseract
+from imutils.object_detection import non_max_suppression
 
 from detection_paths import Paths
-from imutils.object_detection import non_max_suppression
 
 
 def contrast(image):
