@@ -14,22 +14,42 @@ class StatusWindow:
         image = np.ones([600, 600, 3]) * 255
         sequencer = self.robot.sequencer
         cycles = ['Cycles: ' + str(cycle_count)]
-        odom = ['X: ' + str(self.robot.pose.px), 'Y: ' + str(self.robot.pose.py)]
+        odom = ['X: ' + str(round(self.robot.pose.px, 2)), 'Y: ' + str(round(self.robot.pose.py, 2))]
         behaviour = ['Behaviour: ' + sequencer.current_behaviour.name]
         if isinstance(sequencer.current_behaviour, Exploration):
-            behaviour = behaviour + ['  Towards: (' + str(sequencer.current_behaviour.last_goal_x) + ", "
-                                     + str(sequencer.current_behaviour.last_goal_y) + ")"]
+            behaviour = behaviour + ['  Towards: (' + str(sequencer.current_behaviour.last_goal_wx) + ", "
+                                     + str(sequencer.current_behaviour.last_goal_wy) + ")"]
         elif isinstance(sequencer.current_behaviour, Homing):
-            behaviour = behaviour + [' obj_id: ' + str(sequencer.current_behaviour.current_object_type)]
+            behaviour = behaviour + [' obj_id: ' + str(sequencer.current_behaviour.current_object_id)]
             behaviour = behaviour + [' goal_x: ' + str(sequencer.current_behaviour.target_pose.px)]
             behaviour = behaviour + [' goal_y: ' + str(sequencer.current_behaviour.target_pose.py)]
         behaviour = behaviour + ['Idle: ' + str(self.robot.idle_tracker.idle)]
 
+        green_seen_at = self.robot.seen_store.positions[0]
+        green_seen_at[0] = round(green_seen_at[0], 3)
+        green_seen_at[1] = round(green_seen_at[1], 1)
+        red_seen_at = self.robot.seen_store.positions[1]
+        red_seen_at[0] = round(red_seen_at[0], 3)
+        red_seen_at[1] = round(red_seen_at[1], 1)
+        blue_seen_at = self.robot.seen_store.positions[2]
+        blue_seen_at[0] = round(blue_seen_at[0], 3)
+        blue_seen_at[1] = round(blue_seen_at[1], 1)
+        white_seen_at = self.robot.seen_store.positions[3]
+        white_seen_at[0] = round(white_seen_at[0], 3)
+        white_seen_at[1] = round(white_seen_at[1], 1)
         objects = ['Objects found:',
-                   '  Green cuboid: ' + str(self.robot.is_object_found(0)) + '(' + str(self.robot.get_object_detected(0)) + ')',
-                   '  Red hydrant: ' + str(self.robot.is_object_found(1)) + '(' + str(self.robot.get_object_detected(1)) + ')',
-                   '  Blue mailbox: ' + str(self.robot.is_object_found(2)) + '(' + str(self.robot.get_object_detected(2)) + ')',
-                   '  White cube: ' + str(self.robot.is_object_found(3)) + '(' + str(self.robot.get_object_detected(3)) + ')']
+                   '  Green cuboid: ' + str(self.robot.is_object_found(0)),
+                   '      Seen x' + str(self.robot.get_times_seen(0)),
+                   '      Seen at (' + str(green_seen_at) + ')',
+                   '  Red hydrant: ' + str(self.robot.is_object_found(1)),
+                   '      Seen x' + str(self.robot.get_times_seen(1)),
+                   '      Seen at (' + str(red_seen_at) + ')',
+                   '  Blue mailbox: ' + str(self.robot.is_object_found(2)),
+                   '      Seen x' + str(self.robot.get_times_seen(2)),
+                   '      Seen at (' + str(blue_seen_at) + ')',
+                   '  White cube: ' + str(self.robot.is_object_found(3)),
+                   '      Seen x' + str(self.robot.get_times_seen(3)),
+                   '      Seen at (' + str(white_seen_at) + ')',]
 
         offset = 30
         x, y = 10, 30

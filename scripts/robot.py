@@ -30,8 +30,8 @@ class Robot:
         # 1 - Red fire hydrant
         # 2 - Blue mailbox
         # 3 - White, numbered (5) cube
-        self.objects_found = {0: False, 1: False, 2: False, 3: False}  # Whether it's been found
-        self.objects_seen = {0: 0, 1: 0, 2: 0, 3: 0}  # How many times it's been seen / detected
+        self.objects_found = {0: False, 1: False, 2: False, 3: False}  # Whether it's been found (homed towards)
+        self.seen_store = SeenObjectStore()
 
         self.last_laser_msg = None
         self.homing_vel = 0
@@ -85,21 +85,35 @@ class Robot:
 
     def object_detected_calback(self, msg):
         #rospy.loginfo("Detected (" + str(msg.id) + "). Location: (" + str(msg.x) + ", " + str(msg.y) + ")")
-        self.objects_seen[msg.id] = self.objects_seen[msg.id] + 1
+        self.seen_store.on_seen(msg.id, msg.x, msg.y)
         self.sequencer.try_to_home(msg)
 
     # Get how many times an object has been detected
-    def get_object_detected(self, object_type):
-        return self.objects_seen[object_type]
+    def get_times_seen(self, object_id):
+        return self.seen_store.times_seen[object_id]
 
-    def is_object_found(self, object_type):
-        return self.objects_found.get(object_type)
+    # Find the next object to route to if an object was seen while homing towards another object
+    # Two return value cases:
+# a) (-1, None):                      We haven't seen an object that we've not already found
+    # b) (object_id, [x_pos, y_pos]): We've seen an object that we've not already found
+    def get_seen_unfound_object_position(self):
+        for object_id in range(0, 4):
+            if not self.is_object_found(object_id):
+                if self.get_times_seen(object_id) > 0:
+                    return object_id, self.seen_store.get_average_location(object_id)
 
-    def set_object_found(self, object_type):
-        if not self.is_object_found(object_type):
-            print("FOUND OBJECT " + str(object_type))
+        return -1, None # IF THERE IS NO SEEN, UNFOUND OBJECT
 
-        self.objects_found[object_type] = True
+    # Check whether an object has been 'found' (this means we've seen it and homed towards it)
+    def is_object_found(self, object_id):
+        return self.objects_found.get(object_id)
+
+    # Set an object as 'found' (this means we've seen it and homed towards it)
+    def set_object_found(self, object_id):
+        if not self.is_object_found(object_id):
+            print("HOMED TOWARDS AND FOUND OBJECT " + str(object_id))
+
+        self.objects_found[object_id] = True
 
     def send_nav_goal(self, px, py, yaw=-1.0):
         self.cancel_nav_goals()
@@ -160,3 +174,34 @@ class IdleTracker:
     def flush(self):
         self.poses = []
         self.idle = False
+
+# Stores where objects have been seen so we can easily come back to them when exploring
+class SeenObjectStore:
+    def __init__(self):
+        self.times_seen = {0: 0, 1: 0, 2: 0, 3: 0}  # How many times it's been seen / detected
+
+        self.unseen = 0 # The starting coordinate(s) for an unseen object
+        self.positions = {0: [self.unseen, self.unseen], 1: [self.unseen, self.unseen],
+                          2: [self.unseen, self.unseen], 3: [self.unseen, self.unseen]}
+
+    def on_seen(self, object_id, x, y):
+        times_seen = self.times_seen[object_id] + 1
+        self.times_seen[object_id] = times_seen
+
+        avg = self.get_average_location(object_id)
+        # Times the average position for this object by the amount of times it has been seen
+        avg[0] *= times_seen - 1
+        avg[1] *= times_seen - 1
+        # Add the coordinates where we've just seen the object
+        avg[0] += x
+        avg[1] += y
+        # Calculate the new average
+        avg[0] /= times_seen
+        avg[1] /= times_seen
+
+        # Store this new average
+        self.positions[object_id] = avg
+
+    def get_average_location(self, object_id):
+        avg_position = self.positions[object_id]
+        return [avg_position[0], avg_position[1]]

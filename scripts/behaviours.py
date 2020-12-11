@@ -23,8 +23,12 @@ class Behaviour:
 class Exploration(Behaviour):
     def __init__(self):
         Behaviour.__init__(self, "Exploration")
-        self.last_goal_x = 0
-        self.last_goal_y = 0
+        # Last goal in terms of grid coordinates
+        self.last_goal_gx = 0
+        self.last_goal_gy = 0
+        # Last goal in terms of world coordinates
+        self.last_goal_wx = 0
+        self.last_goal_wy = 0
         self.idle_resend = False
 
     def act(self, robot, sequencer):
@@ -32,13 +36,17 @@ class Exploration(Behaviour):
         if sequencer.cycles % sequencer.sequence_hz == 0:
             wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale, aoif.closest_cy / aoif.scale)
 
-            if self.last_goal_x == aoif.closest_cx and self.last_goal_y == aoif.closest_cy:
+            if self.last_goal_gx == aoif.closest_cx and self.last_goal_gy == aoif.closest_cy:
                 rospy.loginfo('Contour unchanged: randomizing slightly (cycles=' + str(sequencer.cycles) + ')')
                 wx += round(random.random() / 2, 1) - 0.3
                 wy += round(random.random() / 2, 1) - 0.3
 
-            self.last_goal_x = aoif.closest_cx
-            self.last_goal_y = aoif.closest_cy
+            # Set the last goal (grid coords)
+            self.last_goal_gx = aoif.closest_cx
+            self.last_goal_gy = aoif.closest_cy
+            # Set the last goal (world coords)
+            self.last_goal_wx = wx
+            self.last_goal_wy = wy
             robot.send_nav_goal(wx, -wy)
             rospy.loginfo('new nav_goal sent to ' + str(wx) + ', ' + str(wy))
 
@@ -49,33 +57,13 @@ class Homing(Behaviour):
 
         self.sequencer = sequencer
         self.laser_angles = laser_angles
-        self.current_object_type = -1
+        self.current_object_id = -1
 
         self.target_pose = None
 
-    def set_target(self, robot, detection_msg):
-        self.current_object_type = detection_msg.id
-        self.target_pose = Pose(detection_msg.x, detection_msg.y, detection_msg.z)
-
-        '''# Calculate the angle from the robot to the object
-        vec_to = [robot.pose.px + detection_msg.x, robot.pose.py + detection_msg.y]
-        vec_from = [robot.pose.px, robot.pose.py]
-        unit_to = vec_to / np.linalg.norm(vec_to)
-        unit_from = vec_from / np.linalg.norm(vec_from)
-        dot_product = np.dot(unit_to, unit_from)
-        angle = np.arccos(dot_product)
-
-        # Determine the distance between the robot and the object
-        dist_vec = [vec_to[0] - vec_from[0], vec_to[1] - vec_from[0]]
-        dist = math.sqrt(dist_vec[0] ** 2 + dist_vec[1] ** 2)
-
-        if dist > 1.0:  # It's too far so the robot needs to move towards the object as well as specifying a rotation
-            norm = [dist_vec[0] / dist, dist_vec[1] / dist]
-            target_dist = dist - 1.0
-            self.target_pose = Pose(robot.pose.px + target_dist * norm[0], robot.pose.py + target_dist * norm[1], angle)
-        else:  # It's close enough so all we need to do is specify the angle
-            self.target_pose = Pose(robot.pose.px, robot.pose.py, angle)
-        '''
+    def set_target(self, object_id, x, y, yaw):
+        self.current_object_id = object_id
+        self.target_pose = Pose(x, y, yaw)
 
     def act(self, robot, sequencer):
         # TODO: Do something with move_base to move towards it
@@ -99,8 +87,10 @@ class Homing(Behaviour):
             robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)
             rospy.loginfo("Sending nav goal for homing to " + str(self.target_pose.px) + ", " + str(self.target_pose.py))
 
+            # TODO Fix it getting stuck while homing
+
     def finished(self, robot):
-        robot.set_object_found(self.current_object_type)
+        robot.set_object_found(self.current_object_id)
         self.sequencer.finished_homing()
         self.last_goal_x = -1e6
         self.last_goal_y = -1e6
