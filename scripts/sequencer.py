@@ -39,13 +39,25 @@ class Sequencer:
             rospy.loginfo("[HOMING] Homing towards obj " + str(detection_msg.id))
 
             self.current_behaviour = Homing(self, self.robot.laser_angles)
-            self.current_behaviour.set_target(detection_msg.id, detection_msg.x, detection_msg.y, detection_msg.z)
+            self.current_behaviour.set_target(*self.get_homing_location(detection_msg))
         elif isinstance(self.current_behaviour, Homing):
             # Only update the angular velocity if this function call is for the same object type we've been homing
             # towards
             if self.current_behaviour.current_object_id == detection_msg.id:
                 # Just in case anything has changed
-                self.current_behaviour.set_target(detection_msg.id, detection_msg.x, detection_msg.y, detection_msg.z)
+                self.current_behaviour.set_target(*self.get_homing_location(detection_msg))
+
+    # Prevents using the detected location for a mailbox, but instead, uses the average seen position for it (which is
+    # only updated when not homing towards it)
+    def get_homing_location(self, detection_msg):
+        if detection_msg.id == 2:
+            avg_pos = self.robot.seen_store.get_average_location(detection_msg.id)
+            return detection_msg.id, avg_pos[0], avg_pos[1], 0
+        else:
+            return detection_msg.id, detection_msg.x, detection_msg.y, detection_msg.z
+
+    def is_homing_towards_mailbox(self):
+        return isinstance(self.current_behaviour, Homing) and self.current_behaviour.current_object_id == 2
 
     def finished_homing(self):
         # Once finished homing, let's check to see if it detected any other objects while homing towards that object

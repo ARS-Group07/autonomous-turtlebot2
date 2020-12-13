@@ -109,9 +109,9 @@ class Unstick(Behaviour):
             robot.cancel_nav_goals()
 
             twist = Twist()
-            twist.angular.z = 0.3
+            twist.angular.z = 2.0
             Behaviour.velocity_publisher.publish(twist)
 
         current_pose = robot.pose
-        if current_pose.ang_dist(self.pose_before) > math.pi / 2:
+        if current_pose.ang_dist(self.pose_before) > math.pi / 4:
             sequencer.finished_unsticking()

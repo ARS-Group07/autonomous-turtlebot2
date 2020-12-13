@@ -81,8 +81,10 @@ class Robot:
         self.idle_tracker.track(self.pose)
 
     def object_detected_callback(self, msg):
-        # rospy.loginfo("Detected (" + str(msg.id) + "). Location: (" + str(msg.x) + ", " + str(msg.y) + ")")
-        self.seen_store.on_seen(msg.id, msg.x, msg.y)
+        # Can create strange behaviour with the averages if it's under the mailbox
+        if not self.sequencer.is_homing_towards_mailbox():
+            self.seen_store.on_seen(msg.id, msg.x, msg.y)
+
         self.sequencer.try_to_home(msg)
 
     # Get how many times an object has been detected
