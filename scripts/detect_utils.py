@@ -8,6 +8,7 @@ from ars.msg import Detection
 from pose import Pose
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
+
 def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
     """ Takes in information from sensors and forms an absolute world location of the detected object, and creates a
     message. """
@@ -47,6 +48,7 @@ def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
         return detection_msg
 
     return False
+
 
 class AMCLConfidenceChecker:
     def __init__(self, checking_for, callback):

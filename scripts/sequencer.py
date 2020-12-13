@@ -3,6 +3,7 @@ import rospy
 from behaviours import Exploration, Homing, Unstick
 from status import StatusWindow
 
+
 class Sequencer:
     def __init__(self, robot, time_started):
         self.robot = robot

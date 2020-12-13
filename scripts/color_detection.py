@@ -94,7 +94,7 @@ class ColorDetector:
 
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 
-        cv2.imshow("masked2", mask)
+        # cv2.imshow("masked2", mask)
         cv2.waitKey(3)
 
     def image_callback_red(self, msg):
@@ -135,7 +135,7 @@ class ColorDetector:
                 self.detection_pub_red.publish(detection_msg)
                 rospy.loginfo("Sending hydrant message")
 
-        cv2.imshow("masked2", mask)
+        # cv2.imshow("masked2", mask)
         cv2.waitKey(3)
 
     def get_amcl_data(self, msg):

@@ -16,9 +16,11 @@ from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
 from detect_utils import AMCLConfidenceChecker
 
+
 def on_amcl_confidence_achieved():
     global localised
     localised = True
+
 
 def localise(laser_angles):
     _ = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
@@ -37,6 +39,7 @@ def localise(laser_angles):
     # robot now localised so kill those subscribers - no longer needed
     wanderer.unsubscribe()
     rospy.loginfo('Killed localisation and wandering behaviours - initialising full robot functionality ... ')
+
 
 if __name__ == '__main__':
     try:
