@@ -2,7 +2,5 @@ Assignment plan
 
 stuff left to do
 1. test objects in different positions
-2. turn 360 after reaching goal? - if not finding objects with other changes
-3. if detects another object while homing towards first - save last object location in memory
-4. only start detection once localised ?? maybe, doesn't matter that much
-5. clean code
+2. use pytesseract for finding the 5 and putting a bounding box on it
+3. clean code
