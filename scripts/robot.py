@@ -41,7 +41,7 @@ class Robot:
 
         # Object detection
         rospy.Subscriber('detection_green', Detection, self.object_detected_callback)
-        rospy.Subscriber('detection_hydrant', Detection, self.object_detected_callback)
+        rospy.Subscriber('detection_red', Detection, self.object_detected_callback)
         rospy.Subscriber('detection_blue', Detection, self.object_detected_callback)
         rospy.Subscriber('detection_text', Detection, self.object_detected_callback)
 
