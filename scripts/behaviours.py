@@ -66,13 +66,11 @@ class Homing(Behaviour):
         self.target_pose = Pose(x, y, yaw)
 
     def act(self, robot, sequencer):
-        # TODO: Do something with move_base to move towards it
-        # TODO: Check if we're sufficiently closed (angular & euclidean dist)
         if robot.pose is None or self.target_pose is None:
             return
 
             # Firstly check if we're close enough
-        if robot.pose.dist(self.target_pose) < 1.0:  # TODO - Check if its been idle for a while?
+        if robot.pose.dist(self.target_pose) < 1.0:
             # Check if the angular distance is sufficient: is it looking at the object?
             rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
             rospy.loginfo('WITHIN TARGET DISTANCE OF OBJECT')
@@ -86,8 +84,6 @@ class Homing(Behaviour):
             self.last_goal_y = self.target_pose.py
             robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)
             rospy.loginfo("Sending nav goal for homing to " + str(self.target_pose.px) + ", " + str(self.target_pose.py))
-
-            # TODO Fix it getting stuck while homing
 
     def finished(self, robot):
         robot.set_object_found(self.current_object_id)
