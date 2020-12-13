@@ -94,3 +94,27 @@ class Homing(Behaviour):
         self.sequencer.finished_homing()
         self.last_goal_x = -1e6
         self.last_goal_y = -1e6
+
+class Unstick(Behaviour):
+    # return_to -> the behaviour to return to
+    def __init__(self, sequencer, return_to):
+        Behaviour.__init__(self, "Unstick")
+
+        self.sequencer = sequencer
+        self.return_to = return_to
+        self.pose_before = None
+
+    def act(self, robot, sequencer):
+        if not self.pose_before:
+            self.pose_before = robot.pose.clone()
+            robot.cancel_nav_goals()
+
+            twist = Twist()
+            twist.angular.z = 0.3
+            Behaviour.velocity_publisher.publish(twist)
+
+        current_pose = robot.pose
+        if current_pose.ang_dist(self.pose_before) > math.pi / 2:
+            rospy.loginfo("Finished trying to unstick")
+
+        # TODO: Return to original behaviour

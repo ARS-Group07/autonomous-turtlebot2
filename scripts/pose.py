@@ -12,6 +12,9 @@ class Pose:
         self.py = y
         self.yaw = yaw
 
+    def clone(self):
+        return Pose(self.px, self.py, self.yaw)
+
     def update_pose(self, px, py, yaw):
         self.px = px
         self.py = py

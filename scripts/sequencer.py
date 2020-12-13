@@ -20,12 +20,16 @@ class Sequencer:
             self.cycles += 1
             self.current_behaviour.act(robot, self)
 
+            robot.idle_tracker.update_idle()
+            if robot.idle_tracker.idle:
+
+                robot.idle_tracker.flush()
+
             if self.cycles % 10 == 0:
                 self.status_window.update(self.cycles)
 
             rate.sleep()
 
-    # Call of this function may come from various threads (i.e. topics from other nodes)
     def try_to_home(self, detection_msg):
         if self.robot.is_object_found(detection_msg.id):
             return
