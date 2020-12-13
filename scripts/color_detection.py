@@ -1,6 +1,4 @@
 #!/usr/bin/env python2.7
-import math
-import numpy as np
 
 import cv2
 import cv_bridge
@@ -15,33 +13,23 @@ from detect_utils import get_detection_message, AMCLConfidenceChecker
 from pose import Pose
 
 
-class Analyzer:
-    # TODO separate subscribers to other classes
-    def __init__(self):
-        self.depthSensor = depth.DepthSensor()
-        self.bridge = cv_bridge.CvBridge()
-        cv2.namedWindow("original", 1)
-        self.image_sub_firehydrant = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_firehydrant)
-        self.image_sub_depth = rospy.Subscriber('camera/depth/image_raw', Image, self.image_callback_depth)
-        self.image_sub_text = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_text)
-        self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
-        self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
-
-class BlueGreenDetector:
+class ColorDetector:
     def __init__(self):
         # Listen for confidence before we start detecting
-        confidence_checker = AMCLConfidenceChecker('Blue/Green Detection', self.on_amcl_confidence_achieved)
+        confidence_checker = AMCLConfidenceChecker('Color detection', self.on_amcl_confidence_achieved)
         confidence_checker.listen_for_confidence()
-
-    def on_amcl_confidence_achieved(self):
-        self.depthSensor = depth.DepthSensor()
         self.bridge = cv_bridge.CvBridge()
         self.pose = Pose()
 
-        self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
-        self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
+    def on_amcl_confidence_achieved(self):
+        self.depthSensor = depth.DepthSensor()
         self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
 
+        self.image_sub_red = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_red)
+        self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
+        self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
+
+        self.detection_pub_red = rospy.Publisher('detection_red', Detection)
         self.detection_pub_green = rospy.Publisher('detection_green', Detection)
         self.detection_pub_blue = rospy.Publisher('detection_blue', Detection)
 
@@ -109,6 +97,47 @@ class BlueGreenDetector:
         cv2.imshow("masked2", mask)
         cv2.waitKey(3)
 
+    def image_callback_red(self, msg):
+        image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
+        (H, W) = image.shape[:2]
+        depth_image = None
+        if self.depthSensor.depth_img is not None:
+            depth_image = self.depthSensor.depth_img.copy()
+
+        image_resized = cv2.resize(image, (W / 4, H / 4))
+        hsv = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, (0, 220, int(255 * 5 / 100)), (0, 255, int(255 * 30 / 100)))
+        # need to convert to bgr so we can convert to grey
+        contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+        count, sum_x, sum_y = 0, 0, 0
+        for c in contours:
+            M = cv2.moments(c)
+            if M['m00'] < 100:
+                continue
+
+            contour_cx = int(M['m10'] / M['m00'])
+            contour_cy = int(M['m01'] / M['m00'])
+
+            count += 1
+            sum_x += contour_cx
+            sum_y += contour_cy
+
+            # get message containing object's absolute world co-ordinates from the current pose, cx, cy and depth image
+            cv2.circle(mask, (contour_cx, contour_cy), 5, 127, -1)
+
+        if count > 0:
+            cv2.circle(mask, (contour_cx, contour_cy), 10, 64, -1)
+            cx = sum_x / count
+            cy = sum_y / count
+            detection_msg = get_detection_message(self.pose, cx * 4, cy * 4, depth_image, obj=1)
+            if detection_msg is not False:
+                self.detection_pub_red.publish(detection_msg)
+                rospy.loginfo("Sending hydrant message")
+
+        cv2.imshow("masked2", mask)
+        cv2.waitKey(3)
+
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
         quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,
@@ -120,6 +149,6 @@ class BlueGreenDetector:
         self.pose.update_pose(px, py, yaw)
 
 
-rospy.init_node('BlueGreenDetector')
-analyzer = BlueGreenDetector()
+rospy.init_node('ColorDetector')
+analyzer = ColorDetector()
 rospy.spin()

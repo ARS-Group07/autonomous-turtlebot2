@@ -58,7 +58,7 @@ class TextSensor:
 
         self.flag = False
 
-        image = contrast(image)
+        # image = contrast(image)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         custom_oem_psm_config = r'--psm 6'
