@@ -3,6 +3,7 @@
 import messagehelper
 import rospy
 import actionlib
+import time
 
 from move_base_msgs.msg import MoveBaseAction
 from robot import Robot
@@ -39,6 +40,8 @@ def localise(laser_angles):
 
 if __name__ == '__main__':
     try:
+        time_started = time.time()
+
         rospy.init_node('assignment_node', anonymous=True)
 
         # wait for all important messages to arrive from various nodes
@@ -77,7 +80,7 @@ if __name__ == '__main__':
         the_robot = Robot(grid=grid, grid_resolution=grid_resolution, grid_vis=grid_vis,
                           aoif=aoif, laser_angles=laser_angles, laser_range_max=laser_range_max,
                           nav_client=nav_client, map_arr=map_arr)
-        the_robot.sequencer = Sequencer(the_robot)
+        the_robot.sequencer = Sequencer(the_robot, time_started)
         the_robot.sequencer.sequence(the_robot)
 
     except rospy.ROSInterruptException:

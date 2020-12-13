@@ -5,10 +5,10 @@ from status import StatusWindow
 
 
 class Sequencer:
-    def __init__(self, robot):
+    def __init__(self, robot, time_started):
         self.robot = robot
         self.cycles = 0
-        self.status_window = StatusWindow(robot)
+        self.status_window = StatusWindow(robot, time_started)
         self.current_behaviour = Exploration()
         self.sequence_hz = 25
 

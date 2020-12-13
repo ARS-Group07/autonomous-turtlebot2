@@ -1,28 +1,20 @@
 #!/usr/bin/env python2.7
+import math
 import numpy as np
-import time
 
 import cv2
 import cv_bridge
 import rospy
 from ars.msg import Detection
-from sensor_msgs.msg import Image
-
-import depth
-from detection_paths import Paths
-from detect_utils import get_detection_message, AMCLConfidenceChecker
-from pose import Pose
 from geometry_msgs.msg import PoseWithCovarianceStamped
+from sensor_msgs.msg import Image
 from tf.transformations import euler_from_quaternion
 
-CONFIDENCE_THRESHOLD = 0.3
-LABELS = open(Paths.LABELS_FILE).read().strip().split("\n")
+import depth
+from detect_utils import get_detection_message, AMCLConfidenceChecker
+from pose import Pose
 
-np.random.seed(4)
-COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
-
-
-class HydrantDetector:
+class RedDetector:
     def __init__(self):
         # Listen for confidence before we start detecting
         confidence_checker = AMCLConfidenceChecker('Hydrant Detection', self.on_amcl_confidence_achieved)
@@ -32,72 +24,50 @@ class HydrantDetector:
         self.depthSensor = depth.DepthSensor()
         self.bridge = cv_bridge.CvBridge()
         self.pose = Pose()
-        self.net = cv2.dnn.readNetFromDarknet(Paths.CONFIG_FILE, Paths.WEIGHTS_FILE)
-        self.image_sub_fire_hydrant = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_fire_hydrant)
+
+        self.image_sub_red = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_red)
         self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
+
         self.detection_pub_hydrant = rospy.Publisher('detection_hydrant', Detection)
 
-    def image_callback_fire_hydrant(self, msg):
+    def image_callback_red(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         (H, W) = image.shape[:2]
         depth_image = None
-
         if self.depthSensor.depth_img is not None:
             depth_image = self.depthSensor.depth_img.copy()
 
-        ln = self.net.getLayerNames()
-        ln = [ln[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
+        image_resized = cv2.resize(image, (W / 4, H / 4))
+        hsv = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
+        mask = cv2.inRange(hsv, (0, 220, int(255 * 5/100)), (0, 255, int(255 * 30/100)))
+        # need to convert to bgr so we can convert to grey
+        contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-        blob = cv2.dnn.blobFromImage(image, 1 / 255.0, (416, 416), swapRB=True, crop=False)
-        self.net.setInput(blob)
+        count, sum_x, sum_y = 0, 0, 0
+        for c in contours:
+            M = cv2.moments(c)
+            if M['m00'] < 100:
+                continue
 
-        start = time.time()
-        layer_outputs = self.net.forward(ln)
-        end = time.time()
-        print("[INFO] YOLO took {:.6f} seconds".format(end - start))
+            contour_cx = int(M['m10'] / M['m00'])
+            contour_cy = int(M['m01'] / M['m00'])
 
-        boxes = []
-        confidences = []
-        classIDs = []
+            count += 1
+            sum_x += contour_cx
+            sum_y += contour_cy
 
-        for output in layer_outputs:
-            for detection in output:
-                scores = detection[5:]
+            # get message containing object's absolute world co-ordinates from the current pose, cx, cy and depth image
+            cv2.circle(mask, (contour_cx, contour_cy), 5, 127, -1)
 
-                classID = np.argmax(scores)
-                confidence = scores[classID]
+        if count > 0:
+            cv2.circle(mask, (contour_cx, contour_cy), 10, 64, -1)
+            cx = sum_x / count
+            cy = sum_y / count
+            detection_msg = get_detection_message(self.pose, cx * 4, cy * 4, depth_image, obj=1)
+            self.detection_pub_hydrant.publish(detection_msg)
+            rospy.loginfo("Sending hydrant message")
 
-                if confidence > CONFIDENCE_THRESHOLD:
-                    box = detection[0:4] * np.array([W, H, W, H])
-                    (centerX, centerY, width, height) = box.astype("int")
-                    x = int(centerX - (width / 2))
-                    y = int(centerY - (height / 2))
-                    boxes.append([x, y, int(width), int(height)])
-                    confidences.append(float(confidence))
-                    classIDs.append(classID)
-
-        idxs = cv2.dnn.NMSBoxes(boxes, confidences, CONFIDENCE_THRESHOLD, CONFIDENCE_THRESHOLD)
-
-        if len(idxs) > 0:
-            for i in idxs.flatten():
-                (x, y) = (boxes[i][0], boxes[i][1])
-                (w, h) = (boxes[i][2], boxes[i][3])
-                color = [int(c) for c in COLORS[classIDs[i]]]
-                cv2.rectangle(image, (x, y), (x + w, y + h), color, 2)
-
-                cx = x + w / 2
-                cy = y + h / 2
-
-                if LABELS[classIDs[i]] is LABELS[10]:
-
-                    # get message containing object's absolute world co-ordinates from the current pose, cx,
-                    # cy and depth image
-                    detection_msg = get_detection_message(self.pose, cx, cy, depth_image, obj=1)
-
-                    if detection_msg:
-                        self.detection_pub_hydrant.publish(detection_msg)
-
-        # cv2.imshow("pred", image)
+        cv2.imshow("masked2", mask)
         cv2.waitKey(3)
 
     def get_amcl_data(self, msg):
@@ -112,5 +82,5 @@ class HydrantDetector:
 
 
 rospy.init_node('HydrantDetector')
-analyzer = HydrantDetector()
+analyzer = RedDetector()
 rospy.spin()
