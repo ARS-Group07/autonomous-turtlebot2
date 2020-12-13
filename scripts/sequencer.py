@@ -22,7 +22,7 @@ class Sequencer:
             if robot.idle_tracker.idle:
                 rospy.loginfo("ROBOT IS STUCK")
                 robot.idle_tracker.flush()
-                self.current_behaviour = Unstick(self.current_behaviour)
+                self.current_behaviour = Unstick(self, self.current_behaviour)
 
             self.current_behaviour.act(robot, self)
             if self.cycles % 10 == 0:
