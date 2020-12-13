@@ -133,7 +133,7 @@ class ColorDetector:
             detection_msg = get_detection_message(self.pose, cx * 4, cy * 4, depth_image, obj=1)
             if detection_msg is not False:
                 self.detection_pub_red.publish(detection_msg)
-                rospy.loginfo("Sending hydrant message")
+                #rospy.loginfo("Sending hydrant message")
 
         cv2.imshow("masked2", mask)
         cv2.waitKey(3)

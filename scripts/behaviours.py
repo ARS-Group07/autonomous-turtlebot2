@@ -108,9 +108,9 @@ class Unstick(Behaviour):
             self.pose_before = robot.pose.clone()
             robot.cancel_nav_goals()
 
-            twist = Twist()
-            twist.angular.z = 2.0
-            Behaviour.velocity_publisher.publish(twist)
+        twist = Twist()
+        twist.angular.z = 2.0
+        Behaviour.velocity_publisher.publish(twist)
 
         current_pose = robot.pose
         if current_pose.ang_dist(self.pose_before) > math.pi / 4:

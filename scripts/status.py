@@ -39,6 +39,7 @@ class StatusWindow:
         red_seen_at[0] = round(red_seen_at[0], 3)
         red_seen_at[1] = round(red_seen_at[1], 1)
         blue_seen_at = self.robot.seen_store.positions[2]
+        mailbox_updating_paused = " (Not Updating)" if self.robot.sequencer.is_homing_towards_mailbox() else ""
         blue_seen_at[0] = round(blue_seen_at[0], 3)
         blue_seen_at[1] = round(blue_seen_at[1], 1)
         white_seen_at = self.robot.seen_store.positions[3]
@@ -52,8 +53,8 @@ class StatusWindow:
                    '      Seen x' + str(self.robot.get_times_seen(1)),
                    '      Seen at (' + str(red_seen_at) + ')',
                    '  Blue mailbox: ' + str(self.robot.is_object_found(2)),
-                   '      Seen x' + str(self.robot.get_times_seen(2)),
-                   '      Seen at (' + str(blue_seen_at) + ')',
+                   '      Seen x' + str(self.robot.get_times_seen(2)) + mailbox_updating_paused,
+                   '      Seen at (' + str(blue_seen_at) + ')' + mailbox_updating_paused,
                    '  White cube: ' + str(self.robot.is_object_found(3)),
                    '      Seen x' + str(self.robot.get_times_seen(3)),
                    '      Seen at (' + str(white_seen_at) + ')',]
