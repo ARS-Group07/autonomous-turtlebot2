@@ -45,9 +45,6 @@ class Robot:
         rospy.Subscriber('detection_blue', Detection, self.object_detected_callback)
         rospy.Subscriber('detection_text', Detection, self.object_detected_callback)
 
-        # Create the fake object detection
-        # self.fake_object_detection = FakeObjectDetection(self)
-
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
         quarternion = [msg.pose.pose.orientation.x, msg.pose.pose.orientation.y,

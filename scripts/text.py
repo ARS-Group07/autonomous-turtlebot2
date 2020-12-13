@@ -64,15 +64,15 @@ class TextSensor:
         custom_oem_psm_config = r'--psm 6'
 
         text2 = pytesseract.image_to_data(image, config=custom_oem_psm_config, output_type=pytesseract.Output.DICT)
-        print("reading result")
+        #print("reading result")
 
         for i in range(0, len(text2["text"])):
-            if int(text2["conf"][i]) >= 80:
-                print("Sure Reading")
-                print(int(text2["conf"][i]))
-                print(text2["text"][i])
+            #if int(text2["conf"][i]) >= 80:
+                #print("Sure Reading")
+                #print(int(text2["conf"][i]))
+                #print(text2["text"][i])
             if text2["text"][i] == "5".encode() and int(text2["conf"][i]) >= 80:
-                print("We did it bois")
+                #print("We did it bois")
                 center = (text2["left"][i] + text2["width"][i] / 2, text2["top"][i] + text2["height"][i] / 2)
                 self.flag = True
 

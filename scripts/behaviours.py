@@ -105,6 +105,9 @@ class Unstick(Behaviour):
         self.pose_before = None
 
     def act(self, robot, sequencer):
+        # To prevent a stack forming of unstick behaviours
+        robot.idle_tracker.flush()
+
         if not self.pose_before:
             self.pose_before = robot.pose.clone()
             robot.cancel_nav_goals()
@@ -115,6 +118,4 @@ class Unstick(Behaviour):
 
         current_pose = robot.pose
         if current_pose.ang_dist(self.pose_before) > math.pi / 2:
-            rospy.loginfo("Finished trying to unstick")
-
-        # TODO: Return to original behaviour
+            sequencer.finished_unsticking()

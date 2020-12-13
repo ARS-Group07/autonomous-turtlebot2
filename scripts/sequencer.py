@@ -1,8 +1,7 @@
 #!/usr/bin/env python2.7
 import rospy
-from behaviours import Exploration, Homing
+from behaviours import Exploration, Homing, Unstick
 from status import StatusWindow
-
 
 class Sequencer:
     def __init__(self, robot, time_started):
@@ -18,13 +17,14 @@ class Sequencer:
         self.cycles = self.cycles + 1
         while not rospy.is_shutdown():
             self.cycles += 1
-            self.current_behaviour.act(robot, self)
 
             robot.idle_tracker.update_idle()
             if robot.idle_tracker.idle:
-
+                rospy.loginfo("ROBOT IS STUCK")
                 robot.idle_tracker.flush()
+                self.current_behaviour = Unstick(self.current_behaviour)
 
+            self.current_behaviour.act(robot, self)
             if self.cycles % 10 == 0:
                 self.status_window.update(self.cycles)
 
@@ -56,3 +56,6 @@ class Sequencer:
         else:
             rospy.loginfo("Saw object while homing. Homing towards object " + str(object_id))
             self.current_behaviour.set_target(object_id, position[0], position[1], 0)
+
+    def finished_unsticking(self):
+        self.current_behaviour = self.current_behaviour.return_to
