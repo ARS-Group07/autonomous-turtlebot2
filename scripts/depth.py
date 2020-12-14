@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 import cv_bridge
+import cv2
 import rospy
 from sensor_msgs.msg import Image
 
@@ -11,5 +12,7 @@ class DepthSensor:
         self.depth_img = None
 
     def image_callback_depth(self, msg):
-        cv_image = self.bridge.imgmsg_to_cv2(msg, "32FC1")
-        self.depth_img = cv_image
+        image = self.bridge.imgmsg_to_cv2(msg, "32FC1")
+        self.depth_img = image
+        # cv2.imshow("depth", cv2.resize(image, (image.shape[1] / 4, image.shape[0] / 4)))
+        # cv2.waitKey(3)
