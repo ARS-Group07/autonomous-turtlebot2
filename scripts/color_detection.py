@@ -63,7 +63,7 @@ class ColorDetector:
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 
         # cv2.imshow("masked", mask)
-        cv2.waitKey(3)
+        # cv2.waitKey(3)
 
     def image_callback_blue(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -95,7 +95,7 @@ class ColorDetector:
             cv2.circle(mask, (cx, cy), 5, 127, -1)
 
         # cv2.imshow("masked2", mask)
-        cv2.waitKey(3)
+        # cv2.waitKey(3)
 
     def image_callback_red(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -135,8 +135,8 @@ class ColorDetector:
                 self.detection_pub_red.publish(detection_msg)
                 rospy.loginfo("Sending hydrant message")
 
-        # cv2.imshow("masked2", mask)
-        cv2.waitKey(3)
+        # cv2.imshow("Red detection", mask)
+        # cv2.waitKey(3)
 
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
