@@ -81,26 +81,8 @@ class Robot:
         self.idle_tracker.track(self.pose)
 
     def object_detected_callback(self, msg):
+        self.seen_store.on_seen(msg.id, msg.x, msg.y)
         self.sequencer.try_to_home(msg)
-       '''# Can create strange behaviour with the averages if it's under the mailbox
-        if msg.id == 2:
-            # Special case for the blue mailbox - only update when sufficiently distanced from it
-            times_seen_mailbox = self.seen_store.times_seen[2]
-            if times_seen_mailbox == 0:
-                # Hasn't seen the mailbox yet so we have no reliable way of gauging how far it is
-                self.seen_store.on_seen(msg.id, msg.x, msg.y)
-            else:
-                # We know where the mailbox is
-                mailbox_pos = self.seen_store.get_average_location(2)
-                dist_to_mailbox = math.sqrt((mailbox_pos[0] - msg.x) ** 2 + (mailbox_pos[1] - msg.y) ** 2)
-                rospy.loginfo("Distance to mailbox: " + str(dist_to_mailbox))
-                if dist_to_mailbox > 1.75:
-                    # Only update the position of the mailbox if at least 1.75 away (when underneath it starts acting
-                    # strange)
-                    self.seen_store.on_seen(msg.id, msg.x, msg.y)
-        else:
-            self.seen_store.on_seen(msg.id, msg.x, msg.y)
-        '''
 
     # Get how many times an object has been detected
     def get_times_seen(self, object_id):

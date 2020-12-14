@@ -101,19 +101,22 @@ class Unstick(Behaviour):
         self.sequencer = sequencer
         self.return_to = return_to
         self.pose_before = None
+        self.direction = -0.5 if random.random() > 0.5 else 0.5
+        self.cycles = 0
 
     def act(self, robot, sequencer):
         # To prevent a stack forming of unstick behaviours
         robot.idle_tracker.flush()
+        self.cycles += 1
 
         if not self.pose_before:
             self.pose_before = robot.pose.clone()
             robot.cancel_nav_goals()
 
         twist = Twist()
-        twist.linear.x = -0.5
+        twist.linear.x = self.direction
         Behaviour.velocity_publisher.publish(twist)
 
         current_pose = robot.pose
-        if current_pose.dist(self.pose_before) > 0.2:
+        if current_pose.dist(self.pose_before) > 0.1 or self.cycles > 50:
             sequencer.finished_unsticking()
