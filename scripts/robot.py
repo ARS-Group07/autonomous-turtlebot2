@@ -92,7 +92,7 @@ class Robot:
                 # We know where the mailbox is
                 mailbox_pos = self.seen_store.get_average_location(2)
                 dist_to_mailbox = math.sqrt((mailbox_pos[0] - msg.x) ** 2 + (mailbox_pos[1] - msg.y) ** 2)
-                rospy.loginfo("DIstance to mailbox: " + str(dist_to_mailbox))
+                rospy.loginfo("Distance to mailbox: " + str(dist_to_mailbox))
                 if dist_to_mailbox > 1.75:
                     # Only update the position of the mailbox if at least 1.75 away (when underneath it starts acting
                     # strange)
