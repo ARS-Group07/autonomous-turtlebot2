@@ -74,28 +74,39 @@ class ColorDetector:
 
         image_resized = cv2.resize(image, (W / 4, H / 4))
         hsv = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
-        mask = cv2.inRange(hsv, (100, 150, 0), (150, 255, 255))
+        mask = cv2.inRange(hsv, (100, 102, 31), (120, 230, 56))
         # need to convert to bgr so we can convert to grey
         contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        lowest_cy = 1e6
+        count = 0
+        sum_x = 0
 
         for c in contours:
             M = cv2.moments(c)
-            if M['m00'] < 30:
+            if M['m00'] < 100:
                 continue
 
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
 
+            sum_x += cx
+            count += 1
+
+            if cy < lowest_cy:
+                lowest_cy = cy
+
+        if count != 0:
             # get message containing object's absolute world co-ordinates from the current pose, cx, cy and depth image
-            detection_msg = get_detection_message(self.pose, cx * 4, cy * 4, depth_image, obj=2)
+            avg_x = sum_x / count
+            detection_msg = get_detection_message(self.pose, avg_x * 4, lowest_cy * 4, depth_image, obj=2)
 
             if detection_msg:
                 self.detection_pub_blue.publish(detection_msg)
 
-            cv2.circle(mask, (cx, cy), 5, 127, -1)
+            cv2.circle(mask, (avg_x, lowest_cy), 5, 127, -1)
 
-        # cv2.imshow("masked2", mask)
-        # cv2.waitKey(3)
+        cv2.imshow("blue", mask)
+        cv2.waitKey(3)
 
     def image_callback_red(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -133,7 +144,7 @@ class ColorDetector:
             detection_msg = get_detection_message(self.pose, cx * 4, cy * 4, depth_image, obj=1)
             if detection_msg is not False:
                 self.detection_pub_red.publish(detection_msg)
-                #rospy.loginfo("Sending hydrant message")
+                # rospy.loginfo("Sending hydrant message")
 
         # cv2.imshow("Red detection", mask)
         # cv2.waitKey(3)

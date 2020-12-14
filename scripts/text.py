@@ -1,13 +1,12 @@
 #!/usr/bin/env python2.7
 import cv2
 import cv_bridge
+import pytesseract
 import rospy
 from ars.msg import Detection
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import Image
 from tf.transformations import euler_from_quaternion
-import pytesseract
-import numpy as np
 
 import depth
 from detect_utils import get_detection_message, AMCLConfidenceChecker
@@ -49,7 +48,7 @@ class TextSensor:
         cx, cy = coord
 
         # cv2.imshow("text", image)
-        cv2.waitKey(3)
+        # cv2.waitKey(3)
 
         # if object has been detected
         if flag:
@@ -68,8 +67,6 @@ class TextSensor:
         custom_oem_psm_config = r'--psm 6'
         text = pytesseract.image_to_data(image, config=custom_oem_psm_config, output_type=pytesseract.Output.DICT)
 
-        rospy.loginfo('SUCCESSFUL DETECT CHECK')
-
         for i in range(0, len(text["text"])):
             if int(text["conf"][i]) >= 70 and text["text"][i] == "5".encode():
                 center = (text["left"][i] + text["width"][i] / 2, text["top"][i] + text["height"][i] / 2)
@@ -78,7 +75,7 @@ class TextSensor:
                 x2 = int(text['left'][i] + text["width"][i])
                 y2 = int(text['left'][i] + text["height"][i])
                 image = cv2.rectangle(image, (x1, y1), (x2, y2), (105, 150, 190), 2)
-                image = cv2.putText(image, '%.1f' % text["conf"][i], (x1 + 5, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                image = cv2.putText(image, '%.1f' % text["conf"][i] + '%', (x1 + 5, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                                     (255, 255, 255), 1)
                 self.flag = True
 

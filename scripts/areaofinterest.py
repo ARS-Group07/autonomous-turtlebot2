@@ -2,6 +2,7 @@
 import cv2
 import numpy as np
 import math
+import rospy
 
 class AreaOfInterestFinder:
     def __init__(self, grid, scale):
@@ -19,6 +20,7 @@ class AreaOfInterestFinder:
         display_image = np.zeros([image.shape[0], image.shape[1], 3], dtype=np.uint8)
         display_image[..., 2] += 240
         unexplored_mask = cv2.inRange(image, 0.499, 0.501)
+        robot_pos = np.where(self.grid.grid == 2.)
 
         # find all discrete unexplored areas
         contours, hierarchy = cv2.findContours(unexplored_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -38,7 +40,7 @@ class AreaOfInterestFinder:
             cx = int(m['m10'] / m['m00'])
             cy = int(m['m01'] / m['m00'])
 
-            dist = math.sqrt((cx / self.scale - robot_x) ** 2 + ((-cy - 0.5) / self.scale - robot_y) ** 2)
+            dist = math.sqrt((cx - robot_pos[1][0] * self.scale) ** 2 + (cy - robot_pos[0][0] * self.scale) ** 2)
             if dist < self.closest_dist:  # -> for furthest
                 self.closest_area = area
                 self.closest_dist = dist

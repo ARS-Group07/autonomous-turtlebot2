@@ -22,7 +22,7 @@ class Pose:
 
     def plot_points_from_laser(self, angle, distance, density):
         """ Takes in a distance and angle from the laser, and returns a list of points to update on the graph. """
-        threshold = 1.  # to avoid updating on the other side of a wall etc.
+        threshold = 0.5  # to avoid updating on the other side of a wall etc.
         rad_angle = angle * math.pi / 180.
         num_points = int((distance / density) + 1)
 

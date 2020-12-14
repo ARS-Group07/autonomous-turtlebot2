@@ -33,7 +33,7 @@ class Exploration(Behaviour):
 
     def act(self, robot, sequencer):
         aoif = robot.aoif
-        if (sequencer.cycles % sequencer.sequence_hz * 2) == 0:
+        if (sequencer.cycles % sequencer.sequence_hz * 1) == 0:
             wx, wy = robot.grid.to_world(aoif.closest_cx / aoif.scale, aoif.closest_cy / aoif.scale)
 
             if self.last_goal_gx == aoif.closest_cx and self.last_goal_gy == aoif.closest_cy:
@@ -79,7 +79,7 @@ class Homing(Behaviour):
             self.finished(robot)
             return
 
-        if (sequencer.cycles % sequencer.sequence_hz * 2) == 0:
+        if (sequencer.cycles % sequencer.sequence_hz * 1) == 0:
             self.last_goal_x = self.target_pose.px
             self.last_goal_y = self.target_pose.py
             robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)

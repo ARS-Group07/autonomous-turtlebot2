@@ -55,7 +55,7 @@ class Robot:
 
         self.pose.update_pose(px, py, yaw)
         self.grid.update_grid(px, py, flag='CURR')
-        self.grid_vis.update_plot()
+        # self.grid_vis.update_plot()
         if self.grid.is_fully_explored():
             rospy.loginfo('Map fully explored, resetting ...')
             self.grid.reset_grid(self.map_arr)
@@ -134,7 +134,7 @@ class Robot:
         self.nav_client.send_goal(goal)
         rospy.loginfo("Sent goal (" + str(goal.target_pose.pose.position.x) + ", " + str(
             goal.target_pose.pose.position.y) + "). Now waiting")
-        _ = self.nav_client.wait_for_result(rospy.Duration(1))
+        _ = self.nav_client.wait_for_result(rospy.Duration(2))
 
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()
