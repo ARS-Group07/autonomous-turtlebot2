@@ -81,7 +81,8 @@ class Robot:
         self.idle_tracker.track(self.pose)
 
     def object_detected_callback(self, msg):
-        # Can create strange behaviour with the averages if it's under the mailbox
+        self.sequencer.try_to_home(msg)
+       '''# Can create strange behaviour with the averages if it's under the mailbox
         if msg.id == 2:
             # Special case for the blue mailbox - only update when sufficiently distanced from it
             times_seen_mailbox = self.seen_store.times_seen[2]
@@ -99,8 +100,7 @@ class Robot:
                     self.seen_store.on_seen(msg.id, msg.x, msg.y)
         else:
             self.seen_store.on_seen(msg.id, msg.x, msg.y)
-
-        self.sequencer.try_to_home(msg)
+        '''
 
     # Get how many times an object has been detected
     def get_times_seen(self, object_id):
