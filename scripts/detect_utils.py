@@ -13,10 +13,12 @@ def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
     """ Takes in information from sensors and forms an absolute world location of the detected object, and creates a
     message. """
 
+    
     if depth_image is not None:
         frame = np.asarray(depth_image)
         depth = frame[cy][cx]
-
+        #from position of pixel and fov of camera, calculate the angle  between front of camera and vector towards object
+        #note that while depth and regular camera report different fovs, this seems to be incorrect (?) in simulation environment
         alpha = np.deg2rad(abs((cx * 60 / 1920) - 30))
 
         if math.isnan(depth):
