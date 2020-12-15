@@ -33,7 +33,7 @@ class TextSensor:
         self.image_sub_text = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_text)
         self.depthSensor = depth.DepthSensor()
         self.amcl_pose_sub = rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
-        self.detection_pub_text = rospy.Publisher('detection_text', Detection)
+        self.detection_pub_text = rospy.Publisher('detection_text', Detection, queue_size=10)
 
     def image_callback_text(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -47,7 +47,7 @@ class TextSensor:
         (flag, coord, image) = self.detect(image)
         cx, cy = coord
 
-        cv2.imshow("text", image)
+        cv2.imshow("Text detection", image)
         cv2.waitKey(3)
 
         # if object has been detected

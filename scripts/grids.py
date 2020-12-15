@@ -54,7 +54,7 @@ class Grid:
     def is_fully_explored(self):
         unexplored_mask = np.where(self.grid == 0.5, 1, 0)
         unexplored_points = np.sum(unexplored_mask)
-        return unexplored_points < 230
+        return unexplored_points < 140
 
     def reset_grid(self, map_arr):
         self.grid = np.copy(map_arr)

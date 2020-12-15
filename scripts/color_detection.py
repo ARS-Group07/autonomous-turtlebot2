@@ -29,9 +29,9 @@ class ColorDetector:
         self.image_sub_green = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_green)
         self.image_sub_blue = rospy.Subscriber('camera/rgb/image_raw', Image, self.image_callback_blue)
 
-        self.detection_pub_red = rospy.Publisher('detection_red', Detection)
-        self.detection_pub_green = rospy.Publisher('detection_green', Detection)
-        self.detection_pub_blue = rospy.Publisher('detection_blue', Detection)
+        self.detection_pub_red = rospy.Publisher('detection_red', Detection, queue_size=10)
+        self.detection_pub_green = rospy.Publisher('detection_green', Detection, queue_size=10)
+        self.detection_pub_blue = rospy.Publisher('detection_blue', Detection, queue_size=10)
 
     def image_callback_green(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
@@ -105,8 +105,8 @@ class ColorDetector:
 
             cv2.circle(mask, (avg_x, lowest_cy), 5, 127, -1)
 
-        # cv2.imshow("blue", mask)
-        # cv2.waitKey(3)
+        cv2.imshow("Blue detection", mask)
+        cv2.waitKey(3)
 
     def image_callback_red(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')

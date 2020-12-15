@@ -1,7 +1,5 @@
 #!/usr/bin/env python2.7
-from robot import Robot
 import cv2
-import numpy as np
 import time
 from behaviours import *
 
@@ -17,7 +15,7 @@ class StatusWindow:
         return str(str(diff) + " seconds")
 
     def update(self, cycle_count):
-        image = np.ones([750, 600, 3]) * 255
+        image = np.ones([430, 320, 3]) * 255
         sequencer = self.robot.sequencer
         elapsed = ['Elapsed: ' + self.get_time_elapsed()]
         cycles = ['Cycles: ' + str(cycle_count)]
@@ -58,10 +56,10 @@ class StatusWindow:
                    '      Seen x' + str(self.robot.get_times_seen(3)),
                    '      Seen at (' + str(white_seen_at) + ')',]
 
-        offset = 30
+        offset = 18
         x, y = 10, 30
         for idx, lbl in enumerate(elapsed + cycles + odom + behaviour + objects):
-            cv2.putText(image, str(lbl), (x, y + offset * idx), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
+            cv2.putText(image, str(lbl), (x, y + offset * idx), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
 
         cv2.imshow("Status", image)
         cv2.waitKey(3)
