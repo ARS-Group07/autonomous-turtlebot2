@@ -62,17 +62,10 @@ class Sequencer:
                 # Home towards the latest known position of the object 
                 self.current_behaviour.set_target(*self.get_homing_location(detection_msg))
 
-    # Prevents using the detected location for a mailbox, but instead, uses the average seen position for it (which is
-    # only updated when not homing towards it)
+    # Returns the latest known location of an object based on the seen_store within robot
     def get_homing_location(self, detection_msg):
-        # if detection_msg.id == 3:
         avg_pos = self.robot.seen_store.get_average_location(detection_msg.id)
         return detection_msg.id, avg_pos[0], avg_pos[1], 0
-        # else:
-        #     return detection_msg.id, detection_msg.x, detection_msg.y, detection_msg.z
-
-    def is_homing_towards_mailbox(self):
-        return isinstance(self.current_behaviour, Homing) and self.current_behaviour.current_object_id == 2
 
     def finished_homing(self):
         # Once finished homing, let's check to see if it detected any other objects while homing towards that object
