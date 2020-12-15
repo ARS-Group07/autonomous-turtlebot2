@@ -8,7 +8,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from move_base_msgs.msg import MoveBaseGoal
 from ars.msg import Detection
 
-
+# The central class that stores all of the runtime data and listens to callbacks
 class Robot:
     def __init__(self, grid, grid_resolution, grid_vis, aoif, laser_angles, laser_range_max, nav_client, map_arr,
                  x=0., y=0., yaw=0., sequencer=None):
@@ -33,9 +33,10 @@ class Robot:
         self.objects_found = {0: False, 1: False, 2: False, 3: False}  # Whether it's been found (homed towards)
         self.seen_store = SeenObjectStore()
 
+        # The last laser message that was received during the LaserScan
         self.last_laser_msg = None
-        self.homing_vel = 0
 
+        # Register subscribers for pose estmate & the laser scan
         rospy.Subscriber('amcl_pose', PoseWithCovarianceStamped, self.get_amcl_data)
         rospy.Subscriber('scan', LaserScan, self.get_laser_data)
 
@@ -63,6 +64,7 @@ class Robot:
     def get_laser_data(self, msg):
         self.last_laser_msg = msg
 
+        # Update the grid based on what it can see (depth-wise and FOV)
         laser_distances = [msg.ranges[i] for i in self.laser_angles]
         for angle, dist in zip(self.laser_angles, laser_distances):
             if math.isinf(dist):  # if laser reads inf distance, clip to the laser's actual max range
@@ -81,10 +83,12 @@ class Robot:
         self.idle_tracker.track(self.pose)
 
     def object_detected_callback(self, msg):
+        # Register the object as seen to better approximate its location
         self.seen_store.on_seen(msg.id, msg.x, msg.y)
+        # Attempt to home towards the object (if possible (not already found / not already homing))
         self.sequencer.try_to_home(msg)
 
-    # Get how many times an object has been detected
+    # Get how many times an object has been seen
     def get_times_seen(self, object_id):
         return self.seen_store.times_seen[object_id]
 
@@ -111,6 +115,7 @@ class Robot:
 
         self.objects_found[object_id] = True
 
+    # Send a navigation goal for the robot (yaw = optional if no yaw desired)
     def send_nav_goal(self, px, py, yaw=-1.0):
         # self.cancel_nav_goals()
 
@@ -123,6 +128,7 @@ class Robot:
             goal.target_pose.pose.orientation.w = 1.0
         else:
             euler = (0, 0, yaw)
+            # Create a quaternion for the given yaw (pitch, roll assumed to be 0)
             quaternion = quaternion_from_euler(*euler)
             goal.target_pose.pose.orientation.x = quaternion[0]
             goal.target_pose.pose.orientation.y = quaternion[1]
@@ -136,7 +142,7 @@ class Robot:
     def cancel_nav_goals(self):
         self.nav_client.cancel_all_goals()
 
-
+# A class for tracking whether the robot is idle or not
 class IdleTracker:
     # idle_threshold is the maximum euclidean distance a robot can travel before it is no longer idle
     # poses_stored is how many of the last x poses to store when considering if the robot is idle
@@ -147,6 +153,7 @@ class IdleTracker:
         self.poses = []  # poses[poses_stored - 1] is the latest pose
         self.idle = False
 
+    # Add a known robot's location to the cache
     def track(self, pose):
         if len(self.poses) == self.poses_stored:
             self.poses.pop(0)
@@ -154,11 +161,14 @@ class IdleTracker:
         self.poses.append(Pose(pose.px, pose.py, pose.yaw))
         self.update_idle()
 
+    # Update the idle flag
     def update_idle(self):
-        if len(self.poses) != self.poses_stored:  # Insufficient data to determine whether idle
+        # Insufficient data to determine whether idle so we assume false
+        if len(self.poses) != self.poses_stored:
             self.idle = False
             return
 
+        # Sum the distance between all of the poses
         cumulative_dist = 0.
         for i in range(0, self.poses_stored - 3):
             pose_i = self.poses[i]
@@ -167,6 +177,9 @@ class IdleTracker:
 
         self.idle = cumulative_dist < self.idle_threshold
 
+    # Remove all cached history of robot poses.
+    # The robot will be marked not idle and the cache will need to be repopulated before whether the robot can be
+    # declared idle again.
     def flush(self):
         self.poses = []
         self.idle = False
