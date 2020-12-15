@@ -1,8 +1,11 @@
 #!/usr/bin/env python2.7
+from robot import Robot
 import cv2
+import numpy as np
 import time
 from behaviours import *
 
+# The window, updated by the Sequencer, that shows the current status & objective of the program
 class StatusWindow:
     def __init__(self, robot, time_started):
         self.robot = robot
@@ -15,11 +18,16 @@ class StatusWindow:
         return str(str(diff) + " seconds")
 
     def update(self, cycle_count):
-        image = np.ones([430, 320, 3]) * 255
+        # The blank canvas to show
+        image = np.ones([750, 600, 3]) * 255
         sequencer = self.robot.sequencer
+
+        # Time-related metrics
         elapsed = ['Elapsed: ' + self.get_time_elapsed()]
         cycles = ['Cycles: ' + str(cycle_count)]
+        # Robot current position (from AMCL)
         odom = ['X: ' + str(round(self.robot.pose.px, 2)), 'Y: ' + str(round(self.robot.pose.py, 2))]
+        # Current behaviour status
         behaviour = ['Behaviour: ' + sequencer.current_behaviour.name]
         if isinstance(sequencer.current_behaviour, Exploration):
             behaviour = behaviour + ['  Towards: (' + str(sequencer.current_behaviour.last_goal_wx) + ", "
@@ -30,6 +38,7 @@ class StatusWindow:
             behaviour = behaviour + [' goal_y: ' + str(sequencer.current_behaviour.target_pose.py)]
         behaviour = behaviour + ['Idle: ' + str(self.robot.idle_tracker.idle)]
 
+        # Object statuses (whether found, how many times seen and approximated location)
         green_seen_at = self.robot.seen_store.positions[0]
         green_seen_at[0] = round(green_seen_at[0], 3)
         green_seen_at[1] = round(green_seen_at[1], 1)
@@ -56,10 +65,11 @@ class StatusWindow:
                    '      Seen x' + str(self.robot.get_times_seen(3)),
                    '      Seen at (' + str(white_seen_at) + ')',]
 
-        offset = 18
+        offset = 30
         x, y = 10, 30
+        # Write all of the lines of text we just generated to the blank canvas
         for idx, lbl in enumerate(elapsed + cycles + odom + behaviour + objects):
-            cv2.putText(image, str(lbl), (x, y + offset * idx), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 1)
+            cv2.putText(image, str(lbl), (x, y + offset * idx), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 2)
 
         cv2.imshow("Status", image)
         cv2.waitKey(3)
