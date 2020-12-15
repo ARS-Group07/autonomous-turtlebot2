@@ -3,49 +3,63 @@ import rospy
 from behaviours import Exploration, Homing, Unstick
 from status import StatusWindow
 
-
+# The central controller class for handling the behaviour-architecture
+# Transitions for states (behaviours):
+# Exploration -> Homing        upon object seen
+# Homing      -> Homing        upon object found, but another object was seen while homing
+# Homing      -> Exploration   upon object found, but no other (unfound) objects have been seen to home towards
+# *           -> Unstick       upon robot being detected as idle
+# Unstick     -> *             upon the robot becoming unstick, the previous state is returned to
 class Sequencer:
     def __init__(self, robot, time_started):
         self.robot = robot
-        self.cycles = 0
-        self.status_window = StatusWindow(robot, time_started)
-        self.current_behaviour = Exploration()
-        self.sequence_hz = 25
+        self.cycles = 0 # How many times the sequencer has ran (number of times a behaviour has been called)
+        self.status_window = StatusWindow(robot, time_started) # The status window
+        self.current_behaviour = Exploration() # The starting behaviour
+        self.sequence_hz = 25 # How often (ms) to run the sequencer
 
+    # The function that calls the main sequencer loop. Only to be called once
     def sequence(self, robot):
         rate = rospy.Rate(self.sequence_hz)
 
+        # Begin the sequencer loop
         self.cycles = self.cycles + 1
         while not rospy.is_shutdown():
             self.cycles += 1
 
+            # If the robot is considered stuck, let's try unsticking it before returning to this instance of current
+            # behaviour
             robot.idle_tracker.update_idle()
             if robot.idle_tracker.idle:
                 rospy.loginfo("ROBOT IS STUCK")
-                robot.idle_tracker.flush()
+                robot.idle_tracker.flush() # Flush the tracker so it doesn't immediately register as stuck again
                 self.current_behaviour = Unstick(self, self.current_behaviour)
 
+            # Run the current behaviour
             self.current_behaviour.act(robot, self)
+            # Update the status window
             if self.cycles % 10 == 0:
                 self.status_window.update(self.cycles)
 
+            # Stop CPU burnout
             rate.sleep()
 
+    # Attempt to home towards a detected object (from the detection message)
     def try_to_home(self, detection_msg):
+        # If the robot has already been found (homed towards), let's ignore it
         if self.robot.is_object_found(detection_msg.id):
             return
 
         if isinstance(self.current_behaviour, Exploration):
+            # If currently exploring, let's begin homing towards the object
             self.robot.cancel_nav_goals()
             rospy.loginfo("[HOMING] Homing towards obj " + str(detection_msg.id))
 
             self.current_behaviour = Homing(self)
             self.current_behaviour.set_target(*self.get_homing_location(detection_msg))
         elif isinstance(self.current_behaviour, Homing):
-            # Only update the angular velocity if this function call is for the same object type we've been homing
-            # towards
             if self.current_behaviour.current_object_id == detection_msg.id:
-                # Just in case anything has changed
+                # Home towards the latest known position of the object 
                 self.current_behaviour.set_target(*self.get_homing_location(detection_msg))
 
     # Prevents using the detected location for a mailbox, but instead, uses the average seen position for it (which is
