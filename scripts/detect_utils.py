@@ -1,4 +1,6 @@
 #!/usr/bin/env python2.7
+
+
 import numpy as np
 import rospy
 import math
@@ -8,7 +10,11 @@ from ars.msg import Detection
 from pose import Pose
 from geometry_msgs.msg import PoseWithCovarianceStamped
 
+#Utilities for object detection classes
 
+
+
+#detection message callback 
 def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
     """ Takes in information from sensors and forms an absolute world location of the detected object, and creates a
     message. """
@@ -51,7 +57,7 @@ def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
 
     return False
 
-
+#checks confidence of AMCL to make sure robot is localized 
 class AMCLConfidenceChecker:
     def __init__(self, checking_for, callback):
         self.checking_for = checking_for

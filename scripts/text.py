@@ -13,13 +13,14 @@ from detect_utils import get_detection_message, AMCLConfidenceChecker
 from pose import Pose
 
 
+#Change contrast and brightness of image to improve detection
 def contrast(image):
     alpha = 5  # Simple contrast control
     beta = 70  # Simple brightness control
     out = cv2.addWeighted(image, alpha, image, 0, beta)
     return out
 
-
+#Passes image to Tesseract using pytesseract and decodes the results
 class TextSensor:
     def __init__(self):
         # Listen for confidence before we start detecting
