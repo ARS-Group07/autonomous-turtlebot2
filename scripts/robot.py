@@ -112,7 +112,7 @@ class Robot:
         self.objects_found[object_id] = True
 
     def send_nav_goal(self, px, py, yaw=-1.0):
-        self.cancel_nav_goals()
+        # self.cancel_nav_goals()
 
         goal = MoveBaseGoal()
         goal.target_pose.header.frame_id = "map"

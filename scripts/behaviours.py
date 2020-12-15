@@ -80,8 +80,6 @@ class Homing(Behaviour):
             return
 
         if (sequencer.cycles % sequencer.sequence_hz * 1) == 0:
-            self.last_goal_x = self.target_pose.px
-            self.last_goal_y = self.target_pose.py
             robot.send_nav_goal(self.target_pose.px, self.target_pose.py, self.target_pose.yaw)
             rospy.loginfo(
                 "Sending nav goal for homing to " + str(self.target_pose.px) + ", " + str(self.target_pose.py))
@@ -89,8 +87,6 @@ class Homing(Behaviour):
     def finished(self, robot):
         robot.set_object_found(self.current_object_id)
         self.sequencer.finished_homing()
-        self.last_goal_x = -1e6
-        self.last_goal_y = -1e6
 
 
 class Unstick(Behaviour):
@@ -101,7 +97,7 @@ class Unstick(Behaviour):
         self.sequencer = sequencer
         self.return_to = return_to
         self.pose_before = None
-        self.direction = -0.5 if random.random() > 0.5 else 0.5
+        self.direction = -0.5
         self.cycles = 0
 
     def act(self, robot, sequencer):

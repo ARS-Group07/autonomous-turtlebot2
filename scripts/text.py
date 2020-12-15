@@ -47,8 +47,8 @@ class TextSensor:
         (flag, coord, image) = self.detect(image)
         cx, cy = coord
 
-        # cv2.imshow("text", image)
-        # cv2.waitKey(3)
+        cv2.imshow("text", image)
+        cv2.waitKey(3)
 
         # if object has been detected
         if flag:

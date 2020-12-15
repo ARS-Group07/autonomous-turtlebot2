@@ -32,7 +32,6 @@ def get_detection_message(original_pose, cx, cy, depth_image=None, obj=None):
             # check if the object is at high enough point for blue things (mailbox)
             beta = np.deg2rad(abs((cy * 45 / 1080) - 22.5))
             y = depth * math.tan(beta)
-            rospy.loginfo(str(y))
             if y < 0.4:
                 return False
 

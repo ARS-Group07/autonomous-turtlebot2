@@ -105,8 +105,8 @@ class ColorDetector:
 
             cv2.circle(mask, (avg_x, lowest_cy), 5, 127, -1)
 
-        cv2.imshow("blue", mask)
-        cv2.waitKey(3)
+        # cv2.imshow("blue", mask)
+        # cv2.waitKey(3)
 
     def image_callback_red(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
