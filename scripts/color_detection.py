@@ -105,7 +105,7 @@ class ColorDetector:
 
             cv2.circle(mask, (avg_x, lowest_cy), 5, 127, -1)
 
-        cv2.imshow("Blue detection", mask)
+        cv2.imshow("Blue detection (red & green detectors not shown)", mask)
         cv2.waitKey(3)
 
     def image_callback_red(self, msg):

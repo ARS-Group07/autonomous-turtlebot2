@@ -44,7 +44,7 @@ class TextSensor:
         if self.depthSensor.depth_img is not None:
             depth_image = self.depthSensor.depth_img.copy()
 
-        (flag, coord, image) = self.detect(image)
+        (flag, coord, image, curr_pose) = self.detect(image)
         cx, cy = coord
 
         cv2.imshow("Text detection", image)
@@ -55,7 +55,7 @@ class TextSensor:
 
             # get message containing object's absolute world co-ordinates from the current pose, cx,
             # cy and depth image
-            detection_msg = get_detection_message(self.pose, cx * 5, cy * 5, depth_image, obj=3)
+            detection_msg = get_detection_message(curr_pose, cx * 5, cy * 5, depth_image, obj=3)
 
             if detection_msg:
                 self.detection_pub_text.publish(detection_msg)
@@ -65,6 +65,7 @@ class TextSensor:
         self.flag = False
 
         custom_oem_psm_config = r'--psm 6'
+        curr_pose = self.pose
         text = pytesseract.image_to_data(image, config=custom_oem_psm_config, output_type=pytesseract.Output.DICT)
 
         for i in range(0, len(text["text"])):
@@ -80,9 +81,9 @@ class TextSensor:
                 self.flag = True
 
         if self.flag:
-            return True, center, image
+            return True, center, image, curr_pose
         else:
-            return False, (0, 0), image
+            return False, (0, 0), image, curr_pose
 
     def get_amcl_data(self, msg):
         """ Gets predicted position data from the adaptive Monte Carlo module and uses it for the grids, etc. """
