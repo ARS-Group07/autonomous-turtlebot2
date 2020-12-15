@@ -16,11 +16,9 @@ from nav_msgs.msg import OccupancyGrid, MapMetaData
 from sensor_msgs.msg import CameraInfo, LaserScan
 from detect_utils import AMCLConfidenceChecker
 
-
 def on_amcl_confidence_achieved():
     global localised
     localised = True
-
 
 def localise(laser_angles):
     _ = rospy.wait_for_message('amcl_pose', PoseWithCovarianceStamped, timeout=5)
@@ -32,6 +30,7 @@ def localise(laser_angles):
     wanderer = Wanderer(laser_angles)
     r = rospy.Rate(15)
     global localised
+    # Wander until the callback for the AMCL confidence checker sets the global localised flag
     while not localised:
         wanderer.move()
         r.sleep()
