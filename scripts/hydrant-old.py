@@ -1,4 +1,7 @@
 #!/usr/bin/env python2.7
+
+
+
 import numpy as np
 import time
 
@@ -21,7 +24,7 @@ LABELS = open(Paths.LABELS_FILE).read().strip().split("\n")
 np.random.seed(4)
 COLORS = np.random.randint(0, 255, size=(len(LABELS), 3), dtype="uint8")
 
-
+#YOLO Object detection - unused due to performance
 class HydrantDetector:
     def __init__(self):
         # Listen for confidence before we start detecting

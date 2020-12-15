@@ -1,5 +1,8 @@
 #!/usr/bin/env python2.7
 
+
+
+
 import cv2
 import cv_bridge
 import rospy
@@ -12,7 +15,7 @@ import depth
 from detect_utils import get_detection_message, AMCLConfidenceChecker
 from pose import Pose
 
-
+#Sensors for detecting objects using color information
 class ColorDetector:
     def __init__(self):
         # Listen for confidence before we start detecting
