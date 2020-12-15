@@ -1,6 +1,7 @@
 #!/usr/bin/env python2.7
 import os
 
+# Contains the paths for all of the required files (all relative to BASE_PATH)
 class Paths:
     USERNAME = os.getlogin()
     BASE_PATH = '/home/' + USERNAME + '/catkin_ws/src/ars/store/'
