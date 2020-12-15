@@ -63,10 +63,12 @@ class TextSensor:
     def detect(self, image):
 
         self.flag = False
-
+        #configure pytesseract
         custom_oem_psm_config = r'--psm 6'
+        #send image to pytesseract, returns texts and bounding boxes
         text = pytesseract.image_to_data(image, config=custom_oem_psm_config, output_type=pytesseract.Output.DICT)
 
+        #scan the text for reading "5" with high confidence
         for i in range(0, len(text["text"])):
             if int(text["conf"][i]) >= 70 and text["text"][i] == "5".encode():
                 center = (text["left"][i] + text["width"][i] / 2, text["top"][i] + text["height"][i] / 2)
@@ -74,6 +76,7 @@ class TextSensor:
                 y1 = int(text['top'][i])
                 x2 = int(text['left'][i] + text["width"][i])
                 y2 = int(text['left'][i] + text["height"][i])
+                #visualize
                 image = cv2.rectangle(image, (x1, y1), (x2, y2), (105, 150, 190), 2)
                 image = cv2.putText(image, '%.1f' % text["conf"][i] + '%', (x1 + 5, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                                     (255, 255, 255), 1)

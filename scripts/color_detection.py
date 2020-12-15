@@ -43,14 +43,15 @@ class ColorDetector:
         image_resized = cv2.resize(image, (W / 4, H / 4))
         hsv = cv2.cvtColor(image_resized, cv2.COLOR_BGR2HSV)
         mask = cv2.inRange(hsv, (36, 25, 25), (70, 255, 255))
-        # need to convert to bgr so we can convert to grey
+        
         contours, hierarchy = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
         for c in contours:
+            #filter out small contours
             M = cv2.moments(c)
             if M['m00'] < 30:
                 continue
-
+            #calculate center
             cx = int(M['m10'] / M['m00'])
             cy = int(M['m01'] / M['m00'])
 
@@ -65,6 +66,7 @@ class ColorDetector:
         # cv2.imshow("masked", mask)
         # cv2.waitKey(3)
 
+    #detects mailbox from blue contour
     def image_callback_blue(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         (H, W) = image.shape[:2]
@@ -91,7 +93,7 @@ class ColorDetector:
 
             sum_x += cx
             count += 1
-
+            #return the highest blue contour find so it doesn't look between the legs of the mailbox 
             if cy < lowest_cy:
                 lowest_cy = cy
 
@@ -107,7 +109,7 @@ class ColorDetector:
 
         cv2.imshow("Blue detection", mask)
         cv2.waitKey(3)
-
+    #detect fire hydrant by contour
     def image_callback_red(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         (H, W) = image.shape[:2]

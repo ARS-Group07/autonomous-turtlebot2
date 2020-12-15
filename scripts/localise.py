@@ -32,7 +32,7 @@ class Wanderer:
         self.obstacle_detected = False
         self.pose = Pose()
         self.desired_pose = Pose()
-
+        self.obs2 = False
         self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.odom_subscriber = rospy.Subscriber('odom', Odometry, self.get_odom_data)
         self.laser_subscriber = rospy.Subscriber('scan', LaserScan, self.get_laser_data)
@@ -54,7 +54,7 @@ class Wanderer:
 
         # turn towards the randomly chosen yaw, stop once reached it, and start moving forwards
         elif self.state == 'TURN':
-            if self.pose.ang_dist(self.desired_pose) > 0.1:
+            if self.obs2:
                 self.pub.publish(self.twist_msg(0., 0.3))
             else:
                 self.state = 'MOVE'
@@ -80,6 +80,11 @@ class Wanderer:
             self.state = 'REVERSE'
         else:
             self.obstacle_detected = False
+        if min_dist < 0.5:
+            self.obs2 = True
+
+        else:
+            self.obs2 = False
 
     @staticmethod
     def twist_msg(lin_vel=0., ang_vel=0.):
