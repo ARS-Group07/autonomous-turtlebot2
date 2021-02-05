@@ -1,4 +1,5 @@
 # Autonomous robotics with TurtleBot2 
+Our implementation of an autonomous exploring and goal seeking system using the TurtleBot2 in ROS. Utilizes the ROS navigation stack including the adaptive Monte Carlo algorithm for localisation, custom display and mapping modules and a custom-built grid map. Uses OpenCV for visual data processing as well as our novel method of efficient map exploration using unexplored area centroids. 
 
 ## Run Instructions
 ### Step 1: Launch environment 
